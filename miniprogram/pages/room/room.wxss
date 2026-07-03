@@ -91,6 +91,46 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12rpx;
+}
+
+.player-identity {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.player-avatar,
+.event-avatar {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(15, 83, 66, 0.1);
+}
+
+.player-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border: 2rpx solid rgba(15, 83, 66, 0.12);
+}
+
+.event-avatar {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--felt);
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.event-avatar.avatar-fallback {
+  font-size: 20rpx;
 }
 
 .seat {

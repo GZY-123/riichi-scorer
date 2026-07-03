@@ -1,9 +1,12 @@
+import { avatarFallbackText } from "../../utils/profile";
+
 type Seat = "east" | "south" | "west" | "north";
 type RoomStatus = "waiting" | "playing" | "finished";
 
 interface PlayerState {
   openid: string;
   nickName: string;
+  avatarFileId?: string;
   seat: Seat;
   score: number;
 }
@@ -18,6 +21,8 @@ interface Ranking {
   openid: string;
   rank: number;
   nickName: string;
+  avatarFileId?: string;
+  avatarText: string;
   seatText: string;
   rawScore: number;
   finalScore: number;
@@ -75,6 +80,8 @@ Page({
           openid: player.openid,
           rank: index + 1,
           nickName: player.nickName,
+          avatarFileId: player.avatarFileId,
+          avatarText: avatarFallbackText(player.nickName),
           seatText: SEAT_TEXT[player.seat],
           rawScore: player.score,
           finalScore: player.score

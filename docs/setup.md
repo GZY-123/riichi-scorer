@@ -32,6 +32,8 @@
 
 客户端需要读取并监听房间文档；创建、加入、记分、撤销全部通过云函数执行。
 
+`users` 集合用于保存头像昵称资料，文档 `_id` 为用户 `OPENID`。该集合会在首次调用 `userProfile` 云函数保存资料时自动创建；权限保持默认「仅创建者可读写」即可，小程序端不直接读写 `users`，读取和保存都走云函数。
+
 ## 4. 安装依赖
 
 在仓库根目录执行：
@@ -45,6 +47,7 @@ npm install --package-lock=false
 ```bash
 cd cloudfunctions/createRoom && npm install --package-lock=false
 cd ../joinRoom && npm install --package-lock=false
+cd ../userProfile && npm install --package-lock=false
 cd ../applyEvent && npm install --package-lock=false
 ```
 
@@ -61,16 +64,17 @@ npm run build   # = build:engine:cloud + build:functions
 
 1. `createRoom`
 2. `joinRoom`
-3. `applyEvent`
-4. `scoreHand`
-5. `recognizeTiles`（部署后在云开发控制台为其配置环境变量 `DASHSCOPE_API_KEY`，见 `docs/recognition.md`）
+3. `userProfile`
+4. `applyEvent`
+5. `scoreHand`
+6. `recognizeTiles`（部署后在云开发控制台为其配置环境变量 `DASHSCOPE_API_KEY`，见 `docs/recognition.md`）
 
 部署完成后，在云开发控制台确认云函数都处于可调用状态。修改任何云函数 TS 源码后需重新 `npm run build:functions` 再上传。
 
 ## 6. 本地预览流程
 
 1. 在微信开发者工具点击「编译」。
-2. 首页输入昵称，选择三麻或四麻，点击「创建房间」。
+2. 首页选择头像、填写昵称并保存资料，选择三麻或四麻，点击「创建房间」。
 3. 使用另一台设备或开发者工具多开模拟器，输入 6 位房间码加入。
 4. 人数达到模式要求后房间自动进入对局中。
 5. 房间页会通过 `rooms` 文档实时监听同步玩家、点数、局数、供托与事件履历。

@@ -35,8 +35,8 @@
 
 .rank-row {
   display: grid;
-  grid-template-columns: 72rpx 1fr auto;
-  gap: 20rpx;
+  grid-template-columns: 64rpx 64rpx minmax(0, 1fr) auto;
+  gap: 18rpx;
   align-items: center;
   min-height: 118rpx;
   border-top: 1rpx solid var(--line);
@@ -64,6 +64,23 @@
   border-color: var(--felt);
   background: var(--felt);
   color: var(--ivory);
+}
+
+.rank-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(15, 83, 66, 0.1);
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--felt);
+  font-size: 24rpx;
+  font-weight: 700;
 }
 
 .rank-name {

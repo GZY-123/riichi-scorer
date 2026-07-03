@@ -4,8 +4,11 @@ import {
   assignSeats,
   createInitialRoom,
   generateUniqueRoomCode,
+  joinPlayer,
   makeRoomCode,
+  normalizeUserProfile,
   PlayerState,
+  resolveUserProfile,
   undoLastEvent,
   validateDeltas
 } from "./roomLogic";
@@ -49,6 +52,101 @@ describe("seat assignment", () => {
       "west",
       "north"
     ]);
+  });
+});
+
+describe("user profile validation", () => {
+  it("normalizes nicknames and optional avatar file ids", () => {
+    expect(
+      normalizeUserProfile({
+        nickName: "  立直玩家  ",
+        avatarFileId: "  cloud://env.avatars/openid  "
+      })
+    ).toEqual({
+      nickName: "立直玩家",
+      avatarFileId: "cloud://env.avatars/openid"
+    });
+
+    expect(normalizeUserProfile({ nickName: "南家", avatarFileId: "  " })).toEqual({
+      nickName: "南家"
+    });
+  });
+
+  it("rejects empty and overlong nicknames", () => {
+    expect(() => normalizeUserProfile({ nickName: " " })).toThrow("昵称不能为空");
+    expect(() => normalizeUserProfile({ nickName: "一二三四五六七八九十一二三四五六七" })).toThrow(
+      "昵称最多 16 个字符"
+    );
+  });
+
+  it("prefers stored user records over frontend fallback profile data", () => {
+    expect(
+      resolveUserProfile(
+        { nickName: "云端玩家", avatarFileId: "cloud://stored-avatar" },
+        { nickName: "前端玩家", avatarFileId: "cloud://fallback-avatar" }
+      )
+    ).toEqual({
+      nickName: "云端玩家",
+      avatarFileId: "cloud://stored-avatar"
+    });
+  });
+});
+
+describe("player profile merging", () => {
+  it("writes avatar file ids into the initial room player", () => {
+    const room = createInitialRoom({
+      roomCode: "123456",
+      mode: "4p",
+      creatorOpenid: "openid_1",
+      creatorNickName: "东家",
+      creatorAvatarFileId: "cloud://avatar/east",
+      now: 1
+    });
+
+    expect(room.players[0]).toMatchObject({
+      openid: "openid_1",
+      nickName: "东家",
+      avatarFileId: "cloud://avatar/east",
+      seat: "east",
+      score: 25000
+    });
+  });
+
+  it("adds avatars for new joins and refreshes them on repeated joins", () => {
+    const room = createInitialRoom({
+      roomCode: "123456",
+      mode: "4p",
+      creatorOpenid: "openid_1",
+      creatorNickName: "东家",
+      now: 1
+    });
+
+    const joined = joinPlayer(room, "openid_2", "南家", 2, "cloud://avatar/south");
+    expect(joined.restored).toBe(false);
+    expect(joined.room.players[1]).toMatchObject({
+      openid: "openid_2",
+      nickName: "南家",
+      avatarFileId: "cloud://avatar/south",
+      seat: "south",
+      score: 25000
+    });
+
+    const scoredRoom = {
+      ...joined.room,
+      players: joined.room.players.map((player) =>
+        player.openid === "openid_2" ? { ...player, score: 27000 } : player
+      )
+    };
+    const restored = joinPlayer(scoredRoom, "openid_2", "新南家", 3, "cloud://avatar/south-new");
+
+    expect(restored.restored).toBe(true);
+    expect(restored.room.players[1]).toMatchObject({
+      openid: "openid_2",
+      nickName: "新南家",
+      avatarFileId: "cloud://avatar/south-new",
+      seat: "south",
+      score: 27000
+    });
   });
 });
 

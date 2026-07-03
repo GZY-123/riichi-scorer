@@ -13,6 +13,13 @@
     <block wx:for="{{rankings}}" wx:key="openid">
       <view class="rank-row">
         <view class="rank-no {{item.rank === 1 ? 'first' : ''}}">{{item.rank}}</view>
+        <image
+          wx:if="{{item.avatarFileId}}"
+          class="rank-avatar"
+          src="{{item.avatarFileId}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="rank-avatar avatar-fallback">{{item.avatarText}}</view>
         <view class="rank-main">
           <view class="rank-name">{{item.nickName}}</view>
           <view class="rank-note">{{item.seatText}}起家</view>

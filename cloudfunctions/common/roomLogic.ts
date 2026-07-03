@@ -7,8 +7,19 @@ export type RoomEventType = "win" | "draw" | "riichi" | "finish" | "undo";
 export interface PlayerState {
   openid: string;
   nickName: string;
+  avatarFileId?: string;
   seat: Seat;
   score: number;
+}
+
+export interface UserProfileInput {
+  nickName?: string;
+  avatarFileId?: string;
+}
+
+export interface UserProfileState {
+  nickName: string;
+  avatarFileId?: string;
 }
 
 export interface RoundState {
@@ -139,6 +150,7 @@ export function createInitialRoom(params: {
   mode: GameMode;
   creatorOpenid: string;
   creatorNickName: string;
+  creatorAvatarFileId?: string;
   now: number;
 }): RoomDocument {
   assertMode(params.mode);
@@ -150,6 +162,7 @@ export function createInitialRoom(params: {
       {
         openid: params.creatorOpenid,
         nickName: normalizeNickName(params.creatorNickName),
+        ...optionalAvatar(params.creatorAvatarFileId),
         seat: "east",
         score: initialScore(params.mode)
       }
@@ -174,17 +187,19 @@ export function joinPlayer(
   room: RoomDocument,
   openid: string,
   nickName: string,
-  now: number
+  now: number,
+  avatarFileId?: string
 ): JoinResult {
   assertOpenid(openid);
   if (room.status === "finished") {
     throw new Error("房间已结算，无法加入");
   }
 
+  const profile = normalizeUserProfile({ nickName, avatarFileId });
   const existingIndex = room.players.findIndex((player) => player.openid === openid);
   if (existingIndex >= 0) {
     const players = room.players.map((player, index) =>
-      index === existingIndex ? { ...player, nickName: normalizeNickName(nickName) } : { ...player }
+      index === existingIndex ? applyUserProfileToPlayer(player, profile) : { ...player }
     );
 
     return {
@@ -206,7 +221,8 @@ export function joinPlayer(
       ...room.players,
       {
         openid,
-        nickName: normalizeNickName(nickName),
+        nickName: profile.nickName,
+        ...optionalAvatar(profile.avatarFileId),
         seat: seatOrder(room.mode)[room.players.length],
         score: initialScore(room.mode)
       }
@@ -374,7 +390,7 @@ export function advanceRound(round: RoundState, mode: GameMode): RoundState {
   };
 }
 
-function normalizeNickName(nickName: string): string {
+export function normalizeNickName(nickName: string): string {
   const normalized = nickName.trim();
   if (!normalized) {
     throw new Error("昵称不能为空");
@@ -383,6 +399,41 @@ function normalizeNickName(nickName: string): string {
     throw new Error("昵称最多 16 个字符");
   }
   return normalized;
+}
+
+export function normalizeAvatarFileId(avatarFileId: string | undefined): string | undefined {
+  const normalized = avatarFileId?.trim() ?? "";
+  return normalized ? normalized : undefined;
+}
+
+export function normalizeUserProfile(profile: UserProfileInput): UserProfileState {
+  return {
+    nickName: normalizeNickName(profile.nickName ?? ""),
+    ...optionalAvatar(profile.avatarFileId)
+  };
+}
+
+export function resolveUserProfile(
+  storedProfile: UserProfileInput | undefined,
+  fallbackProfile: UserProfileInput
+): UserProfileState {
+  if (storedProfile?.nickName?.trim()) {
+    return normalizeUserProfile(storedProfile);
+  }
+
+  return normalizeUserProfile(fallbackProfile);
+}
+
+export function applyUserProfileToPlayer(
+  player: PlayerState,
+  profile: UserProfileState
+): PlayerState {
+  const { avatarFileId: _avatarFileId, ...base } = player;
+  return {
+    ...base,
+    nickName: profile.nickName,
+    ...optionalAvatar(profile.avatarFileId)
+  };
 }
 
 function normalizeDeltas(
@@ -470,4 +521,9 @@ function assertInteger(value: number, label: string): void {
   if (!Number.isSafeInteger(value)) {
     throw new Error(`${label}必须是整数`);
   }
+}
+
+function optionalAvatar(avatarFileId: string | undefined): { avatarFileId?: string } {
+  const normalized = normalizeAvatarFileId(avatarFileId);
+  return normalized ? { avatarFileId: normalized } : {};
 }

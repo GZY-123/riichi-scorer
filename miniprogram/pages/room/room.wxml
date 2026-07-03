@@ -14,7 +14,16 @@
     <block wx:for="{{players}}" wx:key="openid">
       <view class="player-card {{item.isDealer ? 'dealer' : ''}}">
         <view class="player-top">
-          <text class="seat">{{item.seatText}}</text>
+          <view class="player-identity">
+            <image
+              wx:if="{{item.avatarFileId}}"
+              class="player-avatar"
+              src="{{item.avatarFileId}}"
+              mode="aspectFill"
+            />
+            <view wx:else class="player-avatar avatar-fallback">{{item.avatarText}}</view>
+            <text class="seat">{{item.seatText}}</text>
+          </view>
           <text wx:if="{{item.isDealer}}" class="dealer-badge">庄</text>
         </view>
         <view class="player-name">{{item.nickName}}</view>
@@ -58,6 +67,13 @@
       <view class="event-item">
         <view class="event-main">
           <text class="event-type t-{{item.type}}">{{item.typeText}}</text>
+          <image
+            wx:if="{{item.actorAvatarFileId}}"
+            class="event-avatar"
+            src="{{item.actorAvatarFileId}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="event-avatar avatar-fallback">{{item.actorAvatarText}}</view>
           <text class="event-actor">{{item.actorNickName}}</text>
           <text class="event-time">{{item.createdText}}</text>
         </view>

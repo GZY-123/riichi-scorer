@@ -4,15 +4,73 @@
     <view class="subtitle">三麻 / 四麻 · 房间码同桌实时记分</view>
   </view>
 
-  <view class="section panel">
-    <label class="label">昵称</label>
-    <input
-      class="input"
-      maxlength="16"
-      placeholder="输入你的昵称"
-      value="{{nickName}}"
-      bindinput="onNickNameInput"
-    />
+  <view class="section panel profile-panel">
+    <view class="profile-head">
+      <view>
+        <view class="label">个人资料</view>
+        <view class="profile-state">{{profileSaved && !editingProfile ? "已登录" : "填写后进入房间"}}</view>
+      </view>
+      <button
+        wx:if="{{profileSaved && !editingProfile}}"
+        class="mini-button"
+        bindtap="onEditProfile"
+      >
+        修改
+      </button>
+    </view>
+
+    <view wx:if="{{profileSaved && !editingProfile}}" class="profile-summary">
+      <image
+        wx:if="{{avatarFileId}}"
+        class="profile-avatar"
+        src="{{avatarFileId}}"
+        mode="aspectFill"
+      />
+      <view wx:else class="profile-avatar avatar-fallback">{{avatarText}}</view>
+      <view class="profile-name">{{nickName}}</view>
+    </view>
+
+    <view wx:else class="profile-editor">
+      <button
+        class="avatar-picker"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar"
+        disabled="{{uploadingAvatar}}"
+      >
+        <image
+          wx:if="{{avatarPreview || avatarFileId}}"
+          class="profile-avatar"
+          src="{{avatarPreview || avatarFileId}}"
+          mode="aspectFill"
+        />
+        <text wx:else class="profile-avatar avatar-fallback">{{avatarText}}</text>
+      </button>
+      <input
+        class="input nickname-input"
+        type="nickname"
+        maxlength="16"
+        placeholder="输入你的昵称"
+        value="{{nickName}}"
+        bindinput="onNickNameInput"
+      />
+      <view class="button-row profile-actions">
+        <button
+          class="primary-button"
+          loading="{{savingProfile}}"
+          disabled="{{savingProfile || uploadingAvatar}}"
+          bindtap="onSaveProfile"
+        >
+          保存资料
+        </button>
+        <button
+          wx:if="{{profileSaved}}"
+          class="ghost-button"
+          bindtap="onCancelProfileEdit"
+        >
+          取消
+        </button>
+      </view>
+    </view>
   </view>
 
   <view class="section panel">

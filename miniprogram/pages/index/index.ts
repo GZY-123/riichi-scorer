@@ -1,8 +1,21 @@
+import {
+  avatarFallbackText,
+  readCachedUserProfile,
+  UserProfile,
+  writeCachedUserProfile
+} from "../../utils/profile";
+
 type GameMode = "3p" | "4p";
 
 interface InputEvent {
   detail: {
     value: string;
+  };
+}
+
+interface AvatarEvent {
+  detail: {
+    avatarUrl?: string;
   };
 }
 
@@ -19,9 +32,23 @@ interface RoomFunctionResult {
   restored?: boolean;
 }
 
+interface UserProfileFunctionResult {
+  openid: string;
+  profile: UserProfile | null;
+}
+
 Page({
   data: {
+    openid: "",
     nickName: "",
+    avatarFileId: "",
+    avatarPreview: "",
+    avatarText: "麻",
+    profileLoaded: false,
+    profileSaved: false,
+    editingProfile: true,
+    savingProfile: false,
+    uploadingAvatar: false,
     mode: "4p" as GameMode,
     roomCode: "",
     creating: false,
@@ -29,14 +56,84 @@ Page({
   },
 
   onLoad() {
-    const nickName = wx.getStorageSync("nickName");
-    if (typeof nickName === "string" && nickName.trim()) {
-      this.setData({ nickName });
+    const cached = readCachedUserProfile();
+    if (cached?.openid) {
+      this.applyProfile(cached, true, false);
+      this.setData({ profileLoaded: true });
+      return;
+    }
+    if (cached) {
+      this.applyProfile(cached, false, true);
+    }
+
+    this.loadRemoteProfile();
+  },
+
+  async loadRemoteProfile() {
+    try {
+      const result = await this.fetchProfile();
+      this.setOpenid(result.openid);
+      if (result.profile) {
+        const profile = { ...result.profile, openid: result.openid };
+        writeCachedUserProfile(profile);
+        this.applyProfile(profile, true, false);
+      } else {
+        this.setData({ openid: result.openid, editingProfile: true });
+      }
+    } catch (error) {
+      this.showError(error);
+    } finally {
+      this.setData({ profileLoaded: true });
     }
   },
 
   onNickNameInput(event: InputEvent) {
-    this.setData({ nickName: event.detail.value });
+    const nickName = event.detail.value;
+    this.setData({
+      nickName,
+      avatarText: avatarFallbackText(nickName)
+    });
+  },
+
+  async onChooseAvatar(event: AvatarEvent) {
+    const avatarUrl = event.detail.avatarUrl;
+    if (!avatarUrl) {
+      return;
+    }
+
+    this.setData({ avatarPreview: avatarUrl, uploadingAvatar: true });
+    try {
+      const openid = await this.ensureOpenid();
+      const fileID = await this.uploadAvatar(openid, avatarUrl);
+      this.setData({
+        avatarFileId: fileID,
+        avatarPreview: ""
+      });
+    } catch (error) {
+      this.setData({ avatarPreview: "" });
+      this.showError(error);
+    } finally {
+      this.setData({ uploadingAvatar: false });
+    }
+  },
+
+  onEditProfile() {
+    this.setData({ editingProfile: true });
+  },
+
+  onCancelProfileEdit() {
+    if (this.data.profileSaved) {
+      this.setData({ editingProfile: false });
+    }
+  },
+
+  async onSaveProfile() {
+    try {
+      await this.saveProfile();
+      wx.showToast({ title: "资料已保存", icon: "success" });
+    } catch (error) {
+      this.showError(error);
+    }
   },
 
   onRoomCodeInput(event: InputEvent) {
@@ -48,8 +145,8 @@ Page({
   },
 
   async onCreateRoom() {
-    const nickName = this.getNickName();
-    if (!nickName) {
+    const profile = await this.ensureSavedProfile();
+    if (!profile) {
       return;
     }
 
@@ -57,13 +154,12 @@ Page({
     try {
       const response = (await wx.cloud.callFunction({
         name: "createRoom",
-        data: {
-          mode: this.data.mode,
-          nickName
-        }
+        data: this.withProfilePayload({
+          mode: this.data.mode
+        })
       })) as { result?: RoomFunctionResult };
 
-      this.enterRoom(response.result, nickName);
+      this.enterRoom(response.result, profile);
     } catch (error) {
       this.showError(error);
     } finally {
@@ -72,8 +168,8 @@ Page({
   },
 
   async onJoinRoom() {
-    const nickName = this.getNickName();
-    if (!nickName) {
+    const profile = await this.ensureSavedProfile();
+    if (!profile) {
       return;
     }
 
@@ -87,13 +183,12 @@ Page({
     try {
       const response = (await wx.cloud.callFunction({
         name: "joinRoom",
-        data: {
-          roomCode,
-          nickName
-        }
+        data: this.withProfilePayload({
+          roomCode
+        })
       })) as { result?: RoomFunctionResult };
 
-      this.enterRoom(response.result, nickName);
+      this.enterRoom(response.result, profile);
     } catch (error) {
       this.showError(error);
     } finally {
@@ -101,18 +196,193 @@ Page({
     }
   },
 
-  getNickName(): string {
-    const nickName = this.data.nickName.trim();
-    if (!nickName) {
-      wx.showToast({ title: "请先输入昵称", icon: "none" });
-      return "";
+  async ensureSavedProfile(): Promise<UserProfile | null> {
+    if (this.data.uploadingAvatar) {
+      wx.showToast({ title: "头像上传中，请稍候", icon: "none" });
+      return null;
     }
 
-    wx.setStorageSync("nickName", nickName);
+    if (this.data.profileSaved && !this.data.editingProfile) {
+      return this.currentProfile();
+    }
+
+    try {
+      return await this.saveProfile();
+    } catch (error) {
+      this.showError(error);
+      return null;
+    }
+  },
+
+  async saveProfile(): Promise<UserProfile> {
+    if (this.data.uploadingAvatar) {
+      throw new Error("头像上传中，请稍候");
+    }
+
+    const nickName = this.getValidatedNickName();
+    if (!nickName) {
+      throw new Error("请先填写昵称");
+    }
+
+    this.setData({ savingProfile: true });
+    try {
+      const payload = this.withProfilePayload({
+        action: "save" as const,
+        nickName
+      });
+      const response = (await wx.cloud.callFunction({
+        name: "userProfile",
+        data: payload
+      })) as { result?: UserProfileFunctionResult };
+
+      if (!response.result?.profile) {
+        throw new Error("资料保存失败");
+      }
+
+      const profile = {
+        ...response.result.profile,
+        openid: response.result.openid
+      };
+      writeCachedUserProfile(profile);
+      this.applyProfile(profile, true, false);
+      return profile;
+    } finally {
+      this.setData({ savingProfile: false });
+    }
+  },
+
+  getValidatedNickName(): string {
+    const nickName = this.data.nickName.trim();
+    if (!nickName) {
+      wx.showToast({ title: "请先填写昵称", icon: "none" });
+      return "";
+    }
+    if (nickName.length > 16) {
+      wx.showToast({ title: "昵称最多 16 个字符", icon: "none" });
+      return "";
+    }
     return nickName;
   },
 
-  enterRoom(result: RoomFunctionResult | undefined, nickName: string) {
+  withProfilePayload<T extends Record<string, unknown>>(payload: T): T & {
+    nickName: string;
+    avatarFileId?: string;
+  } {
+    return {
+      ...payload,
+      nickName: this.data.nickName.trim(),
+      ...(this.data.avatarFileId ? { avatarFileId: this.data.avatarFileId } : {})
+    };
+  },
+
+  currentProfile(): UserProfile {
+    return {
+      openid: this.data.openid || undefined,
+      nickName: this.data.nickName.trim(),
+      ...(this.data.avatarFileId ? { avatarFileId: this.data.avatarFileId } : {})
+    };
+  },
+
+  async ensureOpenid(): Promise<string> {
+    const app = getApp<IAppOption>();
+    const openid = this.data.openid || app.globalData.openid;
+    if (openid) {
+      return openid;
+    }
+
+    const result = await this.fetchProfile();
+    this.setOpenid(result.openid);
+    if (result.profile && !this.data.profileSaved) {
+      const profile = { ...result.profile, openid: result.openid };
+      writeCachedUserProfile(profile);
+      this.applyProfile(profile, true, false);
+    }
+
+    return result.openid;
+  },
+
+  async fetchProfile(): Promise<UserProfileFunctionResult> {
+    const response = (await wx.cloud.callFunction({
+      name: "userProfile",
+      data: { action: "get" }
+    })) as { result?: UserProfileFunctionResult };
+
+    if (!response.result?.openid) {
+      throw new Error("获取登录身份失败");
+    }
+
+    return response.result;
+  },
+
+  async deleteCurrentAvatar() {
+    if (!this.data.avatarFileId) {
+      return;
+    }
+
+    try {
+      await wx.cloud.deleteFile({
+        fileList: [this.data.avatarFileId]
+      });
+    } catch (_error) {
+      // 旧头像清理失败不阻塞新头像上传。
+    }
+  },
+
+  async uploadAvatar(openid: string, filePath: string): Promise<string> {
+    try {
+      return await this.uploadAvatarFile(openid, filePath);
+    } catch (error) {
+      if (!this.data.avatarFileId || !this.isFileExistsError(error)) {
+        throw error;
+      }
+
+      await this.deleteCurrentAvatar();
+      return this.uploadAvatarFile(openid, filePath);
+    }
+  },
+
+  async uploadAvatarFile(openid: string, filePath: string): Promise<string> {
+    const upload = await wx.cloud.uploadFile({
+      cloudPath: `avatars/${openid}`,
+      filePath
+    });
+
+    if (!upload.fileID) {
+      throw new Error("头像上传失败");
+    }
+
+    return upload.fileID;
+  },
+
+  isFileExistsError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return /already exists|duplicate|file.*exist|已存在|-501001/i.test(message);
+  },
+
+  applyProfile(profile: UserProfile, saved: boolean, editing: boolean) {
+    this.setOpenid(profile.openid ?? "");
+    this.setData({
+      openid: profile.openid ?? this.data.openid,
+      nickName: profile.nickName,
+      avatarFileId: profile.avatarFileId ?? "",
+      avatarPreview: "",
+      avatarText: avatarFallbackText(profile.nickName),
+      profileSaved: saved,
+      editingProfile: editing
+    });
+  },
+
+  setOpenid(openid: string) {
+    if (!openid) {
+      return;
+    }
+
+    const app = getApp<IAppOption>();
+    app.globalData.openid = openid;
+    this.setData({ openid });
+  },
+
+  enterRoom(result: RoomFunctionResult | undefined, profile: UserProfile) {
     if (!result?.roomId) {
       wx.showToast({ title: "房间操作失败", icon: "none" });
       return;
@@ -120,7 +390,8 @@ Page({
 
     const app = getApp<IAppOption>();
     app.globalData.openid = result.playerOpenid;
-    app.globalData.nickName = nickName;
+    app.globalData.nickName = profile.nickName;
+    app.globalData.avatarFileId = profile.avatarFileId ?? "";
 
     wx.navigateTo({
       url: `/pages/room/room?roomId=${result.roomId}`

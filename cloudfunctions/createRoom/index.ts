@@ -3,7 +3,9 @@ import {
   createInitialRoom,
   GameMode,
   makeRoomCode,
-  RoomDocument
+  resolveUserProfile,
+  RoomDocument,
+  UserProfileInput
 } from "../common/roomLogic";
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
@@ -13,13 +15,17 @@ const MAX_CODE_ATTEMPTS = 30;
 interface CreateRoomRequest {
   mode?: GameMode;
   nickName?: string;
+  avatarFileId?: string;
 }
 
 exports.main = async (event: CreateRoomRequest) => {
   const db = cloud.database();
   const { OPENID } = cloud.getWXContext();
   const mode = event.mode === "3p" ? "3p" : "4p";
-  const nickName = event.nickName ?? "";
+  const profile = resolveUserProfile(await getStoredProfile(db, OPENID), {
+    nickName: event.nickName,
+    avatarFileId: event.avatarFileId
+  });
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt += 1) {
     const roomCode = makeRoomCode();
@@ -33,7 +39,8 @@ exports.main = async (event: CreateRoomRequest) => {
       roomCode,
       mode,
       creatorOpenid: OPENID,
-      creatorNickName: nickName,
+      creatorNickName: profile.nickName,
+      creatorAvatarFileId: profile.avatarFileId,
       now
     });
 
@@ -66,4 +73,21 @@ function toCreateRoomResponse(room: RoomDocument, playerOpenid: string) {
 function isDuplicateRoomError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return /duplicate|already exists|_id|E11000|-502001/i.test(message);
+}
+
+async function getStoredProfile(db: any, openid: string): Promise<UserProfileInput | undefined> {
+  try {
+    const snapshot = await db.collection("users").doc(openid).get();
+    return snapshot.data as UserProfileInput | undefined;
+  } catch (error) {
+    if (isMissingProfileRead(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function isMissingProfileRead(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /collection.*not.*exist|document.*not.*exist|not found|不存在|-502005|-502002/i.test(message);
 }

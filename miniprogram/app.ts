@@ -3,7 +3,8 @@ import { CLOUD_ENV_ID } from "./env";
 App<IAppOption>({
   globalData: {
     openid: "",
-    nickName: ""
+    nickName: "",
+    avatarFileId: ""
   },
 
   onLaunch() {

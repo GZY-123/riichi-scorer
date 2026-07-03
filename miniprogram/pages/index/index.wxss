@@ -30,6 +30,85 @@
   font-size: 27rpx;
 }
 
+.profile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.profile-state {
+  color: var(--muted);
+  font-size: 24rpx;
+}
+
+.profile-summary,
+.profile-editor {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  margin-top: 22rpx;
+}
+
+.profile-editor {
+  flex-wrap: wrap;
+}
+
+.profile-avatar,
+.avatar-picker {
+  width: 104rpx !important;
+  height: 104rpx;
+  flex: 0 0 104rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.avatar-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 104rpx;
+  margin: 0;
+  padding: 0;
+  border: 2rpx solid var(--ivory-edge);
+  background: #fdfcf8;
+  line-height: 1;
+}
+
+.avatar-picker[disabled] {
+  opacity: 0.72;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 83, 66, 0.1);
+  color: var(--felt);
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.profile-name {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 34rpx;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nickname-input {
+  flex: 1;
+  min-width: 360rpx;
+}
+
+.profile-actions {
+  width: 100%;
+}
+
 .mode-group {
   display: grid;
   grid-template-columns: 1fr;

@@ -1,3 +1,5 @@
+import { avatarFallbackText } from "../../utils/profile";
+
 type GameMode = "3p" | "4p";
 type Seat = "east" | "south" | "west" | "north";
 type RoomStatus = "waiting" | "playing" | "finished";
@@ -26,6 +28,7 @@ interface DatasetEvent extends InputEvent {
 interface PlayerState {
   openid: string;
   nickName: string;
+  avatarFileId?: string;
   seat: Seat;
   score: number;
 }
@@ -64,6 +67,7 @@ interface RoomDocument {
 interface ViewPlayer extends PlayerState {
   seatText: string;
   isDealer: boolean;
+  avatarText: string;
 }
 
 interface DeltaInput {
@@ -77,6 +81,8 @@ interface ViewEvent extends RoomEventLog {
   typeText: string;
   deltaText: string;
   createdText: string;
+  actorAvatarFileId?: string;
+  actorAvatarText: string;
 }
 
 const SEAT_TEXT: Record<Seat, string> = {
@@ -196,7 +202,8 @@ Page({
     const players = room.players.map((player) => ({
       ...player,
       seatText: SEAT_TEXT[player.seat],
-      isDealer: player.seat === room.round.dealerSeat
+      isDealer: player.seat === room.round.dealerSeat,
+      avatarText: avatarFallbackText(player.nickName)
     }));
 
     const events = [...room.events]
@@ -215,17 +222,23 @@ Page({
   },
 
   toViewEvent(event: RoomEventLog, players: PlayerState[]): ViewEvent {
-    const nickByOpenid = new Map(players.map((player) => [player.openid, player.nickName]));
+    const playerByOpenid = new Map(players.map((player) => [player.openid, player]));
     const deltaText = Object.entries(event.deltas)
       .filter(([, delta]) => delta !== 0)
-      .map(([openid, delta]) => `${nickByOpenid.get(openid) ?? "玩家"} ${delta > 0 ? "+" : ""}${delta}`)
+      .map(([openid, delta]) => {
+        const player = playerByOpenid.get(openid);
+        return `${player?.nickName ?? "玩家"} ${delta > 0 ? "+" : ""}${delta}`;
+      })
       .join(" / ");
+    const actor = playerByOpenid.get(event.actorOpenid);
 
     return {
       ...event,
       typeText: EVENT_TEXT[event.type],
       deltaText: deltaText || "无点数变化",
-      createdText: this.formatTime(event.createdAt)
+      createdText: this.formatTime(event.createdAt),
+      actorAvatarFileId: actor?.avatarFileId,
+      actorAvatarText: avatarFallbackText(actor?.nickName ?? event.actorNickName)
     };
   },
 

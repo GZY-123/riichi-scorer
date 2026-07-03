@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const cfRoot = join(root, "cloudfunctions");
 const buildDir = join(cfRoot, ".build");
-const FUNCTIONS = ["createRoom", "joinRoom", "applyEvent", "recognizeTiles", "scoreHand"];
+const FUNCTIONS = ["createRoom", "joinRoom", "userProfile", "applyEvent", "recognizeTiles", "scoreHand"];
 
 rmSync(buildDir, { recursive: true, force: true });
 execSync("npx tsc -p cloudfunctions/tsconfig.build.json", { cwd: root, stdio: "inherit" });
