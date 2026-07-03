@@ -4,6 +4,9 @@ declare const process: {
   env: Record<string, string | undefined>;
 };
 declare const require: (id: string) => unknown;
+declare const Buffer: {
+  byteLength(input: string, encoding?: string): number;
+};
 
 export interface VisionProviderInput {
   imageBase64: string;
@@ -132,7 +135,7 @@ async function postJson(endpoint: string, apiKey: string, body: unknown): Promis
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "Content-Length": String(payload.length)
+          "Content-Length": String(Buffer.byteLength(payload, "utf8"))
         }
       },
       (response) => {
