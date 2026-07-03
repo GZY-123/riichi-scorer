@@ -168,6 +168,7 @@ function applyDraw(state, event) {
         ...state,
         scores,
         honba: state.honba + 1,
+        riichiDeclared: Array(state.playerCount).fill(false),
         lastResult: { type: "draw", deltas }
     };
     if (scores.some((scoreValue) => scoreValue < 0)) {

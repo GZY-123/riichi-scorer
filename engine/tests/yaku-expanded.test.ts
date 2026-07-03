@@ -373,3 +373,27 @@ describe("detectYaku expanded yakuman and dora boundaries", () => {
     ).toThrow(/dora alone/i);
   });
 });
+
+// 回归：14 张含和牌张的输入形态（拍照识别路径）也要能判出「和牌前 13 张」相关的双倍役满
+describe("14-tile input with embedded winning tile", () => {
+  it("detects junsei chuuren on tsumo and ron", () => {
+    const tiles = ["1m", "1m", "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "9m", "9m", "5m"];
+    for (const winType of ["ron", "tsumo"] as const) {
+      const result = detectYaku(parseHand(tiles, "5m"), { winType });
+      expect(result.yaku.map((yaku) => yaku.id)).toContain("junsei-chuuren");
+      expect(result.yakuman).toBe(2);
+    }
+  });
+
+  it("detects kokushi 13-sided wait", () => {
+    const tiles = ["1m", "9m", "1p", "9p", "1s", "9s", "1z", "2z", "3z", "4z", "5z", "6z", "7z", "1z"];
+    const result = detectYaku(parseHand(tiles, "1z"), { winType: "tsumo" });
+    expect(result.yaku.map((yaku) => yaku.id)).toContain("kokushi-13");
+    expect(result.yakuman).toBe(2);
+  });
+
+  it("rejects a winning tile absent from the 14 tiles", () => {
+    const tiles = ["1m", "1m", "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "9m", "9m", "5m"];
+    expect(() => parseHand(tiles, "6p")).toThrow(/winning tile/i);
+  });
+});

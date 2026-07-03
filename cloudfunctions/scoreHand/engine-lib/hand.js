@@ -49,6 +49,14 @@ function normalizeInput(input, winningTile, options) {
     else if (shapeWithoutWin === 14) {
         concealedAll = [...concealedInput];
         concealedAllOriginal = [...concealedRawInput];
+        if (normalizedWin !== undefined) {
+            const winIndex = concealedInput.findIndex((tile) => tile === normalizedWin);
+            if (winIndex < 0) {
+                throw new Error("Invalid hand: winning tile not found in the 14-tile hand.");
+            }
+            concealedBeforeWin = concealedInput.filter((_, index) => index !== winIndex);
+            concealedBeforeWinOriginal = concealedRawInput.filter((_, index) => index !== winIndex);
+        }
     }
     else if (normalizedWin === undefined) {
         throw new Error(`Invalid hand: expected 14 hand-shape tiles including melds, got ${shapeWithoutWin}.`);
