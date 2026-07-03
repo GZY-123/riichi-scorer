@@ -183,6 +183,7 @@ function applyDraw(state: GameState, event: DrawEvent): GameState {
     ...state,
     scores,
     honba: state.honba + 1,
+    riichiDeclared: Array<boolean>(state.playerCount).fill(false),
     lastResult: { type: "draw", deltas }
   };
 
