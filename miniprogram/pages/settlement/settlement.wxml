@@ -12,14 +12,14 @@
     <view wx:if="{{rankings.length === 0}}" class="empty">暂无玩家数据</view>
     <block wx:for="{{rankings}}" wx:key="openid">
       <view class="rank-row">
-        <view class="rank-no">{{item.rank}}</view>
+        <view class="rank-no {{item.rank === 1 ? 'first' : ''}}">{{item.rank}}</view>
         <view class="rank-main">
-          <view class="rank-name">{{item.seatText}} {{item.nickName}}</view>
-          <view class="rank-note">素点排序占位，后续接入 engine 精算</view>
+          <view class="rank-name">{{item.nickName}}</view>
+          <view class="rank-note">{{item.seatText}}起家</view>
         </view>
         <view class="rank-score">
-          <view>{{item.rawScore}}</view>
-          <view class="final-score">{{item.finalScore}}</view>
+          <view class="final-score num">{{item.finalScore}}</view>
+          <view class="raw-score num">素点 {{item.rawScore}}</view>
         </view>
       </view>
     </block>

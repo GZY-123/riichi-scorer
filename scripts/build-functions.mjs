@@ -3,7 +3,7 @@
 // 微信云函数只上传各函数自己的目录且只能运行 JS，因此共享的 common
 // 编译产物必须复制进每个函数目录内，入口为 dist/<函数名>/index.js。
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, rmSync } from "node:fs";
+import { cpSync, existsSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,6 +28,8 @@ for (const name of FUNCTIONS) {
     }
     cpSync(engineLib, join(distDir, name, "engine-lib"), { recursive: true });
   }
+  // 部署工具要求函数根目录存在 index.js 入口，转发到编译产物
+  writeFileSync(join(fnDir, "index.js"), `module.exports = require("./dist/${name}/index.js");\n`);
   console.log(`built cloudfunctions/${name}/dist`);
 }
 

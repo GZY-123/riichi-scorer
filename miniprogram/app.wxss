@@ -1,8 +1,22 @@
+/* 设计基座：取材自麻将桌 —— 毡绿（桌面）、象牙白（牌面）、朱红（立直棒红点）、琥珀（庄家标志） */
 page {
+  --felt: #0f5342;
+  --felt-deep: #0a3d31;
+  --felt-bright: #1a7a5e;
+  --ivory: #fbf8ef;
+  --ivory-deep: #f3edda;
+  --ivory-edge: #e3dcc4;
+  --ink: #1f2b27;
+  --red: #b93a28;
+  --amber: #b8862c;
+  --muted: #6e7b76;
+  --line: #e9e4d3;
+  --bg: #f1eee3;
+
   min-height: 100vh;
-  background: #f5f7f4;
-  color: #17211f;
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
 }
 
 .page {
@@ -12,20 +26,21 @@ page {
 }
 
 .section {
-  margin-bottom: 28rpx;
+  margin-bottom: 24rpx;
 }
 
 .panel {
   background: #ffffff;
-  border: 1rpx solid #dce4df;
-  border-radius: 8rpx;
-  padding: 28rpx;
+  border: 1rpx solid var(--line);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(31, 43, 39, 0.04);
 }
 
 .label {
   display: block;
   margin-bottom: 12rpx;
-  color: #586662;
+  color: var(--muted);
   font-size: 26rpx;
 }
 
@@ -33,11 +48,11 @@ page {
   box-sizing: border-box;
   width: 100%;
   min-height: 88rpx;
-  padding: 0 22rpx;
-  border: 1rpx solid #cbd6d1;
-  border-radius: 8rpx;
-  background: #ffffff;
-  color: #17211f;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--ivory-edge);
+  border-radius: 14rpx;
+  background: #fdfcf8;
+  color: var(--ink);
   font-size: 30rpx;
 }
 
@@ -47,38 +62,97 @@ page {
   align-items: center;
 }
 
+/* 统一按钮体系：清除微信默认边框与半宽居中行为 */
+button::after {
+  border: none;
+}
+
 .primary-button,
 .secondary-button,
+.ghost-button,
 .danger-button {
-  flex: 1;
-  min-height: 88rpx;
-  border-radius: 8rpx;
+  width: 100% !important;
+  min-height: 92rpx;
+  margin: 0;
+  border-radius: 16rpx;
   font-size: 30rpx;
-  line-height: 88rpx;
+  font-weight: 600;
+  line-height: 92rpx;
+  box-sizing: border-box;
+}
+
+.button-row .primary-button,
+.button-row .secondary-button,
+.button-row .ghost-button,
+.button-row .danger-button {
+  flex: 1;
+  width: auto !important;
 }
 
 .primary-button {
-  background: #176b5b;
-  color: #ffffff;
+  background: var(--felt);
+  color: var(--ivory);
+}
+
+.primary-button:active {
+  background: var(--felt-deep);
 }
 
 .secondary-button {
-  background: #edf4f1;
-  color: #176b5b;
+  background: #ffffff;
+  border: 2rpx solid var(--felt);
+  color: var(--felt);
+  line-height: 88rpx;
+}
+
+.secondary-button:active {
+  background: #eef4f0;
+}
+
+.ghost-button {
+  background: transparent;
+  border: 2rpx solid var(--ivory-edge);
+  color: var(--muted);
+  line-height: 88rpx;
 }
 
 .danger-button {
-  background: #8d2f2f;
+  background: var(--red);
   color: #ffffff;
 }
 
+/* 小尺寸行内按钮（区块标题右侧的操作） */
+.mini-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: fit-content !important;
+  min-width: 0;
+  min-height: 60rpx;
+  margin: 0 !important;
+  padding: 0 28rpx;
+  border-radius: 30rpx;
+  border: 2rpx solid var(--felt);
+  background: #ffffff;
+  color: var(--felt);
+  font-size: 25rpx;
+  font-weight: 600;
+  line-height: 56rpx;
+}
+
+.num {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
 .muted {
-  color: #6a7672;
+  color: var(--muted);
 }
 
 .empty {
   padding: 36rpx 0;
-  color: #75817d;
+  color: var(--muted);
   text-align: center;
-  font-size: 28rpx;
+  font-size: 27rpx;
 }

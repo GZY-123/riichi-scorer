@@ -1,10 +1,13 @@
 <view class="page room-page">
-  <view class="room-header panel">
+  <view class="room-header">
     <view>
-      <view class="room-code">房间 {{roomCode || "------"}}</view>
-      <view class="round-line">{{roundText}}</view>
+      <view class="room-label">房间码</view>
+      <view class="room-code num">{{roomCode || "------"}}</view>
     </view>
-    <view class="sync-state">{{watchState}}</view>
+    <view class="header-right">
+      <view class="round-chip">{{roundText}}</view>
+      <view class="sync-state"><text class="sync-dot"></text>{{watchState}}</view>
+    </view>
   </view>
 
   <view class="score-grid section">
@@ -15,19 +18,19 @@
           <text wx:if="{{item.isDealer}}" class="dealer-badge">庄</text>
         </view>
         <view class="player-name">{{item.nickName}}</view>
-        <view class="score">{{item.score}}</view>
+        <view class="score num">{{item.score}}</view>
       </view>
     </block>
   </view>
 
-  <view class="section panel round-panel">
+  <view class="section round-panel">
     <view class="round-stat">
-      <text class="stat-label">立直棒</text>
-      <text class="stat-value">{{riichiSticks}}</text>
+      <text class="stat-label"><text class="stick-dot red"></text>立直棒</text>
+      <text class="stat-value num">{{riichiSticks}}</text>
     </view>
     <view class="round-stat">
-      <text class="stat-label">本场棒</text>
-      <text class="stat-value">{{honba}}</text>
+      <text class="stat-label"><text class="stick-dot amber"></text>本场棒</text>
+      <text class="stat-value num">{{honba}}</text>
     </view>
     <view class="round-stat">
       <text class="stat-label">状态</text>
@@ -36,19 +39,16 @@
   </view>
 
   <view class="section action-grid">
-    <button class="primary-button" bindtap="onWinTap">和牌</button>
-    <button class="secondary-button" bindtap="onDrawTap">流局</button>
-    <button class="secondary-button" bindtap="onRiichiTap">立直</button>
-    <button class="secondary-button" bindtap="onPhotoTap">拍照识别</button>
-  </view>
-
-  <view class="section button-row">
-    <button class="secondary-button" bindtap="onUndoTap">撤销上一步</button>
-    <button class="secondary-button" bindtap="onSettlementTap">查看结算</button>
+    <button class="felt-main" bindtap="onWinTap">和牌</button>
+    <button class="felt-sub" bindtap="onDrawTap">流局</button>
+    <button class="felt-sub" bindtap="onRiichiTap">立直</button>
+    <button class="felt-sub" bindtap="onPhotoTap">拍照识别</button>
+    <button class="felt-ghost" bindtap="onUndoTap">撤销上一步</button>
+    <button class="felt-ghost" bindtap="onSettlementTap">查看结算</button>
   </view>
 
   <view class="section">
-    <button class="danger-button" bindtap="onFinishTap">终局结算</button>
+    <button class="finish-button" bindtap="onFinishTap">终局结算</button>
   </view>
 
   <view class="section panel">
@@ -57,11 +57,11 @@
     <block wx:for="{{events}}" wx:key="id">
       <view class="event-item">
         <view class="event-main">
-          <text class="event-type">{{item.typeText}}</text>
+          <text class="event-type t-{{item.type}}">{{item.typeText}}</text>
           <text class="event-actor">{{item.actorNickName}}</text>
+          <text class="event-time">{{item.createdText}}</text>
         </view>
         <view class="event-deltas">{{item.deltaText}}</view>
-        <view class="event-time">{{item.createdText}}</view>
       </view>
     </block>
   </view>

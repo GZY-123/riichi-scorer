@@ -1,64 +1,79 @@
 .index-page {
-  padding-top: 72rpx;
+  padding-top: 64rpx;
 }
 
 .hero {
-  margin-bottom: 36rpx;
+  margin-bottom: 40rpx;
+  padding: 0 6rpx;
 }
 
 .title {
-  color: #17322d;
-  font-size: 46rpx;
+  color: var(--felt-deep);
+  font-size: 52rpx;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: 2rpx;
+}
+
+/* 朱红一点，如「中」牌 */
+.title-dot {
+  display: inline-block;
+  width: 16rpx;
+  height: 16rpx;
+  margin-left: 10rpx;
+  border-radius: 4rpx;
+  background: var(--red);
 }
 
 .subtitle {
-  margin-top: 10rpx;
-  color: #6a7672;
-  font-size: 28rpx;
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 27rpx;
 }
 
 .mode-group {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18rpx;
-  margin-bottom: 24rpx;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
 }
 
 .mode-option {
   display: flex;
   gap: 18rpx;
   align-items: center;
-  min-height: 104rpx;
-  padding: 0 20rpx;
-  border: 1rpx solid #d9e3df;
-  border-radius: 8rpx;
-  background: #fbfcfb;
+  min-height: 112rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid var(--line);
+  border-radius: 16rpx;
+  background: #fdfcf8;
 }
 
 .mode-option.active {
-  border-color: #176b5b;
-  background: #edf7f3;
+  border-color: var(--felt);
+  background: #f0f5ef;
 }
 
 .mode-title {
-  color: #17211f;
+  color: var(--ink);
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .mode-desc {
   margin-top: 6rpx;
-  color: #72807b;
+  color: var(--muted);
   font-size: 24rpx;
 }
 
 .create-button,
 .join-button {
-  margin-top: 24rpx;
+  margin-top: 28rpx;
 }
 
 .room-code-input {
-  letter-spacing: 0;
+  letter-spacing: 6rpx;
+  font-size: 34rpx;
+  font-weight: 600;
+  text-align: center;
+  font-feature-settings: "tnum";
 }

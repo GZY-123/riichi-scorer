@@ -1,7 +1,7 @@
 <view class="page index-page">
   <view class="hero">
-    <view class="title">立直麻将记分</view>
-    <view class="subtitle">三麻 / 四麻多人实时房间</view>
+    <view class="title">立直麻将记分<text class="title-dot"></text></view>
+    <view class="subtitle">三麻 / 四麻 · 房间码同桌实时记分</view>
   </view>
 
   <view class="section panel">
