@@ -1,7 +1,6 @@
 /* 房间页 = 牌桌：毡绿桌面上摆象牙白的牌 */
 page {
   background: radial-gradient(circle at 50% 10%, #14614d 0%, #0f5342 48%, #0a3d31 100%);
-  background-attachment: fixed;
 }
 
 .room-page {
@@ -340,7 +339,7 @@ page {
   width: 100%;
   max-height: 88vh;
   overflow: auto;
-  padding: 32rpx 32rpx 40rpx;
+  padding: 32rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
   border-radius: 28rpx 28rpx 0 0;
   background: #ffffff;
   box-sizing: border-box;
