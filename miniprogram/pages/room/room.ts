@@ -359,7 +359,9 @@ Page({
   },
 
   onPhotoTap() {
-    wx.showToast({ title: "开发中", icon: "none" });
+    wx.navigateTo({
+      url: `/pages/capture/capture?roomId=${this.data.roomId}`
+    });
   },
 
   onUndoTap() {

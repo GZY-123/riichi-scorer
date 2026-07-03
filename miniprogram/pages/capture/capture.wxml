@@ -1,0 +1,164 @@
+<view class="page capture-page">
+  <view class="panel capture-header">
+    <view>
+      <view class="room-code">房间 {{roomCode || "------"}}</view>
+      <view class="round-line">{{roundText}} {{honba}}本场 / 供托 {{riichiSticks}}</view>
+    </view>
+    <view class="mode-badge">{{mode === "3p" ? "三麻" : "四麻"}}</view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">图片识别</view>
+    <view class="button-row action-row">
+      <button class="primary-button" bindtap="onChooseImage">拍照/相册</button>
+      <button class="secondary-button" bindtap="onManualOnlyTap">手动录入</button>
+    </view>
+    <image wx:if="{{imageTempPath}}" class="photo-preview" src="{{imageTempPath}}" mode="aspectFill" />
+    <view class="status-line">{{recognizeState}}</view>
+    <view wx:if="{{confidenceText}}" class="hint-line">置信度 {{confidenceText}}</view>
+    <view wx:if="{{recognizeError}}" class="error-line">{{recognizeError}}</view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-heading">
+      <view class="section-title">牌面修正</view>
+      <button class="mini-button" bindtap="onAddTile">加牌</button>
+    </view>
+    <view wx:if="{{tiles.length === 0}}" class="empty">暂无牌面，可手动输入或先识别图片</view>
+    <view class="tile-grid">
+      <block wx:for="{{tiles}}" wx:key="id">
+        <view
+          class="tile-cell {{item.isWinning ? 'winning' : ''}}"
+          data-index="{{index}}"
+          bindtap="onTileTap"
+        >
+          <text>{{item.value}}</text>
+          <text wx:if="{{item.isWinning}}" class="winning-mark">和</text>
+        </view>
+      </block>
+    </view>
+
+    <textarea
+      class="manual-input"
+      maxlength="200"
+      placeholder="手动输入牌，例如：1m 2m 3m 4p 5p 6p ..."
+      value="{{manualTilesText}}"
+      bindinput="onManualTilesInput"
+    />
+    <button class="secondary-button full-button" bindtap="onApplyManualTiles">应用手动牌面</button>
+
+    <view class="sub-section">
+      <view class="section-heading">
+        <view class="sub-title">副露</view>
+        <button class="mini-button" bindtap="onAddMeld">新增副露</button>
+      </view>
+      <view wx:if="{{melds.length === 0}}" class="muted-line">无副露</view>
+      <block wx:for="{{melds}}" wx:key="id">
+        <view class="meld-row" data-index="{{index}}" bindtap="onEditMeld">
+          <text class="meld-type">{{item.typeText}}</text>
+          <text class="meld-tiles">{{item.tilesText}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">场况</view>
+    <view class="setting-row">
+      <text>和牌者</text>
+      <picker mode="selector" range="{{playerNames}}" value="{{winnerIndex}}" bindchange="onWinnerChange">
+        <view class="picker-value">{{playerNames[winnerIndex] || "请选择"}}</view>
+      </picker>
+    </view>
+    <view class="setting-row">
+      <text>和牌方式</text>
+      <view class="toggle-row">
+        <button class="toggle-button {{winType === 'ron' ? 'active' : ''}}" data-type="ron" bindtap="onWinTypeTap">荣和</button>
+        <button class="toggle-button {{winType === 'tsumo' ? 'active' : ''}}" data-type="tsumo" bindtap="onWinTypeTap">自摸</button>
+      </view>
+    </view>
+    <view wx:if="{{winType === 'ron'}}" class="setting-row">
+      <text>放铳者</text>
+      <picker mode="selector" range="{{playerNames}}" value="{{loserIndex}}" bindchange="onLoserChange">
+        <view class="picker-value">{{playerNames[loserIndex] || "请选择"}}</view>
+      </picker>
+    </view>
+    <view class="setting-row">
+      <text>场风</text>
+      <text class="setting-value">{{prevalentWindText}}</text>
+    </view>
+    <view class="setting-row">
+      <text>立直</text>
+      <switch checked="{{riichi}}" color="#176b5b" bindchange="onRiichiChange" />
+    </view>
+    <view class="setting-row">
+      <text>一发</text>
+      <switch checked="{{ippatsu}}" color="#176b5b" bindchange="onIppatsuChange" />
+    </view>
+    <view class="field-block">
+      <text class="label">宝牌指示牌</text>
+      <input
+        class="input"
+        placeholder="例如：3p 7s"
+        value="{{doraIndicatorsText}}"
+        bindinput="onDoraInput"
+      />
+    </view>
+    <view wx:if="{{mode === '3p'}}" class="field-block">
+      <text class="label">拔北数</text>
+      <input class="input" type="number" value="{{nukiDora}}" bindinput="onNukiDoraInput" />
+    </view>
+    <button class="primary-button full-button" loading="{{scoring}}" bindtap="onScoreTap">算点预览</button>
+  </view>
+
+  <view wx:if="{{scorePreview}}" class="section panel">
+    <view class="section-title">点数预览</view>
+    <view class="score-main">{{scorePreview.valueText}}</view>
+    <view class="score-sub">{{scorePreview.paymentText}}</view>
+    <view class="yaku-line">{{scorePreview.yakuText}}</view>
+    <block wx:for="{{scorePreview.deltaRows}}" wx:key="openid">
+      <view class="delta-row">
+        <text>{{item.label}}</text>
+        <text class="{{item.positive ? 'delta-positive' : 'delta-negative'}}">{{item.valueText}}</text>
+      </view>
+    </block>
+    <button class="primary-button full-button" loading="{{applying}}" bindtap="onConfirmApply">确认落账</button>
+  </view>
+
+  <view wx:if="{{tileEditorVisible}}" class="modal-mask">
+    <view class="editor-panel">
+      <view class="panel-title">编辑牌</view>
+      <input class="input" value="{{tileEditorValue}}" bindinput="onTileEditorInput" />
+      <view class="setting-row">
+        <text>设为和牌张</text>
+        <switch checked="{{tileEditorWinning}}" color="#176b5b" bindchange="onTileWinningChange" />
+      </view>
+      <button class="secondary-button full-button" bindtap="onMakePonMeld">用此牌创建碰副露</button>
+      <view class="button-row panel-actions">
+        <button class="danger-button" bindtap="onDeleteTile">删除</button>
+        <button class="secondary-button" bindtap="onCancelTileEditor">取消</button>
+        <button class="primary-button" bindtap="onSaveTileEditor">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{meldEditorVisible}}" class="modal-mask">
+    <view class="editor-panel">
+      <view class="panel-title">编辑副露</view>
+      <picker mode="selector" range="{{meldTypeTexts}}" value="{{meldTypeIndex}}" bindchange="onMeldTypeChange">
+        <view class="picker-box">类型：{{meldTypeTexts[meldTypeIndex]}}</view>
+      </picker>
+      <input
+        class="input meld-input"
+        placeholder="副露牌，例如：2m 3m 4m"
+        value="{{meldTilesText}}"
+        bindinput="onMeldTilesInput"
+      />
+      <view class="button-row panel-actions">
+        <button class="danger-button" bindtap="onDeleteMeld">删除</button>
+        <button class="secondary-button" bindtap="onCancelMeldEditor">取消</button>
+        <button class="primary-button" bindtap="onSaveMeld">保存</button>
+      </view>
+    </view>
+  </view>
+</view>
