@@ -4,10 +4,11 @@
   "private": true,
   "description": "微信云开发立直麻将多人记分小程序",
   "scripts": {
-    "build": "npm run build:engine:cloud",
+    "build": "npm run build:engine:cloud && npm run build:functions",
     "build:engine:cloud": "rm -rf cloudfunctions/scoreHand/engine-lib && tsc -p engine/tsconfig.json --module CommonJS --moduleResolution Node --target ES2020 --outDir cloudfunctions/scoreHand/engine-lib --declaration false --declarationMap false",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:functions": "node scripts/build-functions.mjs"
   },
   "dependencies": {
     "wx-server-sdk": "^3.0.1"

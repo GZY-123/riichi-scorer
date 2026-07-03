@@ -1,7 +1,7 @@
 {
   "name": "join-room",
   "version": "0.1.0",
-  "main": "index.ts",
+  "main": "dist/joinRoom/index.js",
   "dependencies": {
     "wx-server-sdk": "^3.0.1"
   }

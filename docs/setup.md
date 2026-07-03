@@ -50,13 +50,22 @@ cd ../applyEvent && npm install --package-lock=false
 
 ## 5. 部署云函数
 
-在微信开发者工具中展开 `cloudfunctions/`，依次右键以下目录并选择「上传并部署：云端安装依赖」：
+云函数以 TypeScript 编写，部署前必须先在仓库根目录编译出 `dist/`（每个函数的入口是 `dist/<函数名>/index.js`，共享的 `common` 与 `engine-lib` 会一并复制进函数目录）：
+
+```bash
+npm install
+npm run build   # = build:engine:cloud + build:functions
+```
+
+然后在微信开发者工具中展开 `cloudfunctions/`，依次右键以下目录并选择「上传并部署：云端安装依赖」：
 
 1. `createRoom`
 2. `joinRoom`
 3. `applyEvent`
+4. `scoreHand`
+5. `recognizeTiles`（部署后在云开发控制台为其配置环境变量 `DASHSCOPE_API_KEY`，见 `docs/recognition.md`）
 
-部署完成后，在云开发控制台确认三个云函数都处于可调用状态。
+部署完成后，在云开发控制台确认云函数都处于可调用状态。修改任何云函数 TS 源码后需重新 `npm run build:functions` 再上传。
 
 ## 6. 本地预览流程
 
