@@ -1,0 +1,81 @@
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.title {
+  color: #17322d;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin-top: 8rpx;
+  color: #6a7672;
+  font-size: 26rpx;
+}
+
+.status {
+  color: #176b5b;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.section-title {
+  margin-bottom: 12rpx;
+  color: #17211f;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 72rpx 1fr 160rpx;
+  gap: 18rpx;
+  align-items: center;
+  min-height: 112rpx;
+  border-top: 1rpx solid #e7eeea;
+}
+
+.rank-no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #edf4f1;
+  color: #176b5b;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.rank-name {
+  color: #17211f;
+  font-size: 30rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-note {
+  margin-top: 6rpx;
+  color: #72807b;
+  font-size: 22rpx;
+}
+
+.rank-score {
+  text-align: right;
+  color: #17211f;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.final-score {
+  margin-top: 6rpx;
+  color: #6a7672;
+  font-size: 22rpx;
+  font-weight: 400;
+}

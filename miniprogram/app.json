@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/room/room",
+    "pages/settlement/settlement"
+  ],
+  "window": {
+    "navigationBarTitleText": "立直麻将记分",
+    "navigationBarBackgroundColor": "#17322d",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f7f4",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2"
+}

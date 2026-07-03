@@ -1,0 +1,55 @@
+<view class="page index-page">
+  <view class="hero">
+    <view class="title">立直麻将记分</view>
+    <view class="subtitle">三麻 / 四麻多人实时房间</view>
+  </view>
+
+  <view class="section panel">
+    <label class="label">昵称</label>
+    <input
+      class="input"
+      maxlength="16"
+      placeholder="输入你的昵称"
+      value="{{nickName}}"
+      bindinput="onNickNameInput"
+    />
+  </view>
+
+  <view class="section panel">
+    <view class="label">创建房间</view>
+    <radio-group class="mode-group" bindchange="onModeChange">
+      <label class="mode-option {{mode === '4p' ? 'active' : ''}}">
+        <radio value="4p" checked="{{mode === '4p'}}" color="#176b5b" />
+        <view>
+          <view class="mode-title">四麻</view>
+          <view class="mode-desc">4 人，初始 25000 点</view>
+        </view>
+      </label>
+      <label class="mode-option {{mode === '3p' ? 'active' : ''}}">
+        <radio value="3p" checked="{{mode === '3p'}}" color="#176b5b" />
+        <view>
+          <view class="mode-title">三麻</view>
+          <view class="mode-desc">3 人，初始 35000 点</view>
+        </view>
+      </label>
+    </radio-group>
+    <button class="primary-button create-button" loading="{{creating}}" bindtap="onCreateRoom">
+      创建房间
+    </button>
+  </view>
+
+  <view class="section panel">
+    <label class="label">加入房间</label>
+    <input
+      class="input room-code-input"
+      maxlength="6"
+      type="number"
+      placeholder="输入 6 位房间码"
+      value="{{roomCode}}"
+      bindinput="onRoomCodeInput"
+    />
+    <button class="secondary-button join-button" loading="{{joining}}" bindtap="onJoinRoom">
+      加入房间
+    </button>
+  </view>
+</view>

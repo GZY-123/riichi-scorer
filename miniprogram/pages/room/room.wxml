@@ -1,0 +1,114 @@
+<view class="page room-page">
+  <view class="room-header panel">
+    <view>
+      <view class="room-code">房间 {{roomCode || "------"}}</view>
+      <view class="round-line">{{roundText}}</view>
+    </view>
+    <view class="sync-state">{{watchState}}</view>
+  </view>
+
+  <view class="score-grid section">
+    <block wx:for="{{players}}" wx:key="openid">
+      <view class="player-card {{item.isDealer ? 'dealer' : ''}}">
+        <view class="player-top">
+          <text class="seat">{{item.seatText}}</text>
+          <text wx:if="{{item.isDealer}}" class="dealer-badge">庄</text>
+        </view>
+        <view class="player-name">{{item.nickName}}</view>
+        <view class="score">{{item.score}}</view>
+      </view>
+    </block>
+  </view>
+
+  <view class="section panel round-panel">
+    <view class="round-stat">
+      <text class="stat-label">立直棒</text>
+      <text class="stat-value">{{riichiSticks}}</text>
+    </view>
+    <view class="round-stat">
+      <text class="stat-label">本场棒</text>
+      <text class="stat-value">{{honba}}</text>
+    </view>
+    <view class="round-stat">
+      <text class="stat-label">状态</text>
+      <text class="stat-value">{{statusText}}</text>
+    </view>
+  </view>
+
+  <view class="section action-grid">
+    <button class="primary-button" bindtap="onWinTap">和牌</button>
+    <button class="secondary-button" bindtap="onDrawTap">流局</button>
+    <button class="secondary-button" bindtap="onRiichiTap">立直</button>
+    <button class="secondary-button" bindtap="onPhotoTap">拍照识别</button>
+  </view>
+
+  <view class="section button-row">
+    <button class="secondary-button" bindtap="onUndoTap">撤销上一步</button>
+    <button class="secondary-button" bindtap="onSettlementTap">查看结算</button>
+  </view>
+
+  <view class="section">
+    <button class="danger-button" bindtap="onFinishTap">终局结算</button>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">事件履历</view>
+    <view wx:if="{{events.length === 0}}" class="empty">暂无事件</view>
+    <block wx:for="{{events}}" wx:key="id">
+      <view class="event-item">
+        <view class="event-main">
+          <text class="event-type">{{item.typeText}}</text>
+          <text class="event-actor">{{item.actorNickName}}</text>
+        </view>
+        <view class="event-deltas">{{item.deltaText}}</view>
+        <view class="event-time">{{item.createdText}}</view>
+      </view>
+    </block>
+  </view>
+
+  <view wx:if="{{eventPanelVisible}}" class="modal-mask">
+    <view class="event-panel">
+      <view class="panel-title">{{eventTypeText}}</view>
+      <block wx:for="{{deltaInputs}}" wx:key="openid">
+        <view class="delta-row">
+          <view>
+            <view class="delta-player">{{item.seatText}} {{item.nickName}}</view>
+            <view class="delta-hint">正数加点，负数扣点</view>
+          </view>
+          <input
+            class="delta-input"
+            type="number"
+            value="{{item.value}}"
+            data-openid="{{item.openid}}"
+            bindinput="onDeltaInput"
+          />
+        </view>
+      </block>
+
+      <view class="setting-row">
+        <text>供托变化</text>
+        <input class="small-input" type="number" value="{{riichiStickDelta}}" bindinput="onRiichiDeltaInput" />
+      </view>
+      <view class="setting-row">
+        <text>本场变化</text>
+        <input class="small-input" type="number" value="{{honbaDelta}}" bindinput="onHonbaDeltaInput" />
+      </view>
+      <view class="setting-row">
+        <text>推进局数</text>
+        <switch checked="{{advanceRound}}" color="#176b5b" bindchange="onAdvanceRoundChange" />
+      </view>
+      <textarea
+        class="note-input"
+        maxlength="80"
+        placeholder="备注，可留空"
+        value="{{note}}"
+        bindinput="onNoteInput"
+      />
+
+      <view class="button-row panel-actions">
+        <button class="secondary-button" bindtap="onCancelEvent">取消</button>
+        <button class="primary-button" loading="{{submitting}}" bindtap="onSubmitEvent">记录</button>
+      </view>
+    </view>
+  </view>
+</view>

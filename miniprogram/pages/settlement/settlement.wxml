@@ -1,0 +1,27 @@
+<view class="page settlement-page">
+  <view class="panel summary">
+    <view>
+      <view class="title">终局结算</view>
+      <view class="subtitle">房间 {{roomCode || "------"}}</view>
+    </view>
+    <view class="status">{{statusText}}</view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">顺位</view>
+    <view wx:if="{{rankings.length === 0}}" class="empty">暂无玩家数据</view>
+    <block wx:for="{{rankings}}" wx:key="openid">
+      <view class="rank-row">
+        <view class="rank-no">{{item.rank}}</view>
+        <view class="rank-main">
+          <view class="rank-name">{{item.seatText}} {{item.nickName}}</view>
+          <view class="rank-note">素点排序占位，后续接入 engine 精算</view>
+        </view>
+        <view class="rank-score">
+          <view>{{item.rawScore}}</view>
+          <view class="final-score">{{item.finalScore}}</view>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

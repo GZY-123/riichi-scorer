@@ -1,0 +1,224 @@
+.room-page {
+  padding-bottom: 48rpx;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.room-code {
+  color: #17322d;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.round-line {
+  margin-top: 8rpx;
+  color: #65736e;
+  font-size: 26rpx;
+}
+
+.sync-state {
+  color: #176b5b;
+  font-size: 24rpx;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.player-card {
+  min-height: 176rpx;
+  padding: 22rpx;
+  border: 1rpx solid #d9e3df;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.player-card.dealer {
+  border-color: #c16a35;
+  background: #fff8f2;
+}
+
+.player-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seat {
+  color: #176b5b;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.dealer-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #c16a35;
+  color: #ffffff;
+  font-size: 24rpx;
+}
+
+.player-name {
+  margin-top: 16rpx;
+  color: #17211f;
+  font-size: 30rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  margin-top: 10rpx;
+  color: #0f1d1a;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.round-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.round-stat {
+  min-width: 0;
+}
+
+.stat-label {
+  display: block;
+  color: #72807b;
+  font-size: 24rpx;
+}
+
+.stat-value {
+  display: block;
+  margin-top: 6rpx;
+  color: #17211f;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.section-title {
+  color: #17211f;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.event-item {
+  padding: 22rpx 0;
+  border-top: 1rpx solid #e8eeeb;
+}
+
+.event-main {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.event-type {
+  color: #176b5b;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.event-actor {
+  color: #17211f;
+  font-size: 28rpx;
+}
+
+.event-deltas,
+.event-time {
+  margin-top: 8rpx;
+  color: #6a7672;
+  font-size: 24rpx;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(12, 20, 18, 0.42);
+}
+
+.event-panel {
+  width: 100%;
+  max-height: 88vh;
+  overflow: auto;
+  padding: 28rpx;
+  border-radius: 8rpx 8rpx 0 0;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.panel-title {
+  margin-bottom: 20rpx;
+  color: #17211f;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.delta-row,
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+  min-height: 88rpx;
+  border-top: 1rpx solid #edf1ef;
+}
+
+.delta-player {
+  color: #17211f;
+  font-size: 28rpx;
+}
+
+.delta-hint {
+  margin-top: 4rpx;
+  color: #77837f;
+  font-size: 22rpx;
+}
+
+.delta-input,
+.small-input {
+  width: 180rpx;
+  min-height: 72rpx;
+  padding: 0 16rpx;
+  border: 1rpx solid #cbd6d1;
+  border-radius: 8rpx;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.note-input {
+  width: 100%;
+  min-height: 120rpx;
+  margin-top: 20rpx;
+  padding: 18rpx;
+  border: 1rpx solid #cbd6d1;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+}
+
+.panel-actions {
+  margin-top: 24rpx;
+}
