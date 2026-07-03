@@ -1,5 +1,5 @@
 import type { GameMode } from "./roomLogic";
-import { MeldInput, assertTileCopiesWithinFour, validateMelds, validateTileList } from "./tileNotation";
+import { MeldInput, normalizeTileForCount, validateMelds, validateTileList } from "./tileNotation";
 
 export interface RecognizedTilesPayload {
   tiles: string[];
@@ -86,16 +86,35 @@ function normalizeRecognitionPayload(
     throw new Error("视觉模型 JSON 必须包含 tiles 数组");
   }
 
-  const tiles = validateTileList(payload.tiles.map(String), mode, "识别牌面", {
+  const validated = validateTileList(payload.tiles.map(String), mode, "识别牌面", {
     allowEmpty: false
   });
   const melds = normalizeLooseMelds(payload.melds, mode);
-  assertTileCopiesWithinFour([...tiles, ...melds.flatMap((meld) => meld.tiles)], mode);
 
+  // 视觉模型计数易出错：同种牌超过 4 张时裁掉多余的，压低置信度交给人工修正，而不是让整次识别报废
+  const counts = new Map<string, number>();
+  for (const tile of melds.flatMap((meld) => meld.tiles)) {
+    const key = normalizeTileForCount(tile, mode);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const tiles: string[] = [];
+  let trimmedCount = 0;
+  for (const tile of validated) {
+    const key = normalizeTileForCount(tile, mode);
+    const next = (counts.get(key) ?? 0) + 1;
+    if (next > 4) {
+      trimmedCount += 1;
+      continue;
+    }
+    counts.set(key, next);
+    tiles.push(tile);
+  }
+
+  const confidence = normalizeConfidence(payload.confidence);
   return {
     tiles,
     melds,
-    confidence: normalizeConfidence(payload.confidence),
+    confidence: trimmedCount > 0 ? Math.min(confidence, 0.3) : confidence,
     rawText
   };
 }

@@ -13,6 +13,7 @@
       <button class="primary-button" bindtap="onChooseImage">拍照/相册</button>
       <button class="secondary-button" bindtap="onManualOnlyTap">手动录入</button>
     </view>
+    <view class="hint-line">拍摄建议：横屏俯拍，牌排成一行占满画面，光线充足、避免反光</view>
     <image wx:if="{{imageTempPath}}" class="photo-preview" src="{{imageTempPath}}" mode="aspectFill" />
     <view class="status-line">{{recognizeState}}</view>
     <view wx:if="{{confidenceText}}" class="hint-line">置信度 {{confidenceText}}</view>

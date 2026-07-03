@@ -69,3 +69,19 @@ describe("vision recognition parsing", () => {
     }
   });
 });
+
+describe("over-four copy tolerance", () => {
+  it("trims extra copies instead of failing and lowers confidence", () => {
+    const raw = JSON.stringify({
+      tiles: ["2s", "3s", "4s", "4p", "5p", "6p", "7p", "8p", "9p", "6s", "7s", "8s", "2z", "2z", "2z", "2z", "2z"],
+      melds: [],
+      confidence: 0.9
+    });
+    const result = parseVisionRecognition(raw, "4p");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.tiles.filter((tile) => tile === "2z").length).toBe(4);
+      expect(result.value.confidence).toBeLessThanOrEqual(0.3);
+    }
+  });
+});
