@@ -243,7 +243,7 @@ Page({
 
   async onChooseImage() {
     try {
-      const tempFilePath = await this.chooseImage();
+      const tempFilePath = await this.compressForRecognition(await this.chooseImage());
       this.setData({
         imageTempPath: tempFilePath,
         recognizeState: "上传图片中",
@@ -630,6 +630,27 @@ Page({
         fail: reject
       });
     });
+  },
+
+  // 视觉 API 对 base64 图片有大小上限，识别麻将牌 1600px 宽度足够
+  async compressForRecognition(filePath: string): Promise<string> {
+    try {
+      const info = await new Promise<{ width: number }>((resolve, reject) => {
+        wx.getImageInfo({ src: filePath, success: resolve, fail: reject });
+      });
+      const result = await new Promise<{ tempFilePath?: string }>((resolve, reject) => {
+        wx.compressImage({
+          src: filePath,
+          quality: 70,
+          compressedWidth: Math.min(info.width, 1600),
+          success: resolve,
+          fail: reject
+        });
+      });
+      return result.tempFilePath || filePath;
+    } catch {
+      return filePath;
+    }
   },
 
   async uploadImage(filePath: string): Promise<string> {
