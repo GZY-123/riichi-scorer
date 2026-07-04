@@ -242,7 +242,11 @@ async function postFormJson(endpoint: string, body: string): Promise<unknown> {
         path: `${url.pathname}${url.search}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "Content-Length": String(Buffer.byteLength(body, "utf8"))
+          "Content-Length": String(Buffer.byteLength(body, "utf8")),
+          // 云函数出口为数据中心 IP，缺少 UA 极易触发 Cloudflare 拦截
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          Accept: "application/json"
         }
       },
       (response) => {
