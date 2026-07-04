@@ -314,3 +314,16 @@ tile-keyboard {
 .panel-actions {
   margin-top: 22rpx;
 }
+
+.tile-cell-img {
+  width: 84%;
+  height: 92%;
+}
+
+.sequence-line {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+  word-break: break-all;
+  line-height: 1.6;
+}

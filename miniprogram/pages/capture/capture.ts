@@ -73,8 +73,10 @@ interface TileCell {
   id: string;
   value: string;
   isWinning: boolean;
-  // 渲染 key 含牌值：值变化时强制重建组件实例，规避真机列表 diff 复用错位
+  // 渲染 key 含牌值：值变化时强制重建节点，规避真机列表 diff 复用错位
   renderKey?: string;
+  // 直接由页面数据给出图片路径，手牌格不经过自定义组件，消除实例复用变量
+  src?: string;
 }
 
 interface MeldInput {
@@ -198,7 +200,8 @@ Page({
     nukiDora: "0",
     scoring: false,
     applying: false,
-    scorePreview: null as ScorePreview | null
+    scorePreview: null as ScorePreview | null,
+    handSequence: ""
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -324,8 +327,10 @@ Page({
       isWinning: index === result.tiles.length - 1
     }));
     const melds = this.toMeldViews(result.melds ?? []);
+    const sorted = this.sortHandTiles(tiles);
     this.setData({
-      tiles: this.decorateTiles(this.sortHandTiles(tiles)),
+      tiles: this.decorateTiles(sorted),
+      handSequence: this.handSequenceText(sorted),
       melds,
       recognizeState: "识别完成",
       recognizeError: "",
@@ -707,6 +712,7 @@ Page({
   syncTiles(tiles: TileCell[]) {
     this.setData({
       tiles: this.decorateTiles(tiles),
+      handSequence: this.handSequenceText(tiles),
       scorePreview: null
     });
   },
@@ -775,8 +781,13 @@ Page({
   decorateTiles(tiles: TileCell[]): TileCell[] {
     return tiles.map((tile) => ({
       ...tile,
-      renderKey: `${tile.id}_${tile.value}_${tile.isWinning ? 1 : 0}`
+      renderKey: `${tile.id}_${tile.value}_${tile.isWinning ? 1 : 0}`,
+      src: `/images/tiles/${isTileNotation(tile.value, this.data.mode) ? tile.value : "front"}.png`
     }));
+  },
+
+  handSequenceText(tiles: TileCell[]): string {
+    return tiles.map((tile) => tile.value).join(" ");
   },
 
   toScorePreview(result: ScoreHandResult): ScorePreview {

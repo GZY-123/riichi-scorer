@@ -33,12 +33,13 @@
           data-index="{{index}}"
           bindtap="onTileTap"
         >
-          <tile-image code="{{item.value}}" size="large" />
+          <image class="tile-cell-img" src="{{item.src}}" mode="aspectFit" />
           <text wx:if="{{item.isWinning}}" class="winning-mark">和</text>
         </view>
       </block>
     </view>
     <view class="keyboard-status">已录入 {{tiles.length}} 张 · 点牌可修改，红框为和牌张</view>
+    <view wx:if="{{tiles.length > 0}}" class="sequence-line num">{{handSequence}}</view>
     <tile-keyboard bind:tap="onHandKeyboardTap" bind:delete="onHandKeyboardDelete" />
 
     <view class="sub-section">
