@@ -23,9 +23,8 @@
   <view class="section panel">
     <view class="section-heading">
       <view class="section-title">牌面修正</view>
-      <button class="mini-button" bindtap="onAddTile">加牌</button>
     </view>
-    <view wx:if="{{tiles.length === 0}}" class="empty">暂无牌面，可手动输入或先识别图片</view>
+    <view wx:if="{{tiles.length === 0}}" class="empty">暂无牌面，可点选下方牌键录入或先识别图片</view>
     <view class="tile-grid">
       <block wx:for="{{tiles}}" wx:key="id">
         <view
@@ -33,20 +32,13 @@
           data-index="{{index}}"
           bindtap="onTileTap"
         >
-          <text>{{item.value}}</text>
+          <tile-image code="{{item.value}}" size="large" />
           <text wx:if="{{item.isWinning}}" class="winning-mark">和</text>
         </view>
       </block>
     </view>
-
-    <textarea
-      class="manual-input"
-      maxlength="200"
-      placeholder="手动输入牌，例如：1m 2m 3m 4p 5p 6p ..."
-      value="{{manualTilesText}}"
-      bindinput="onManualTilesInput"
-    />
-    <button class="secondary-button full-button" bindtap="onApplyManualTiles">应用手动牌面</button>
+    <view class="keyboard-status">已录入 {{tiles.length}} 张</view>
+    <tile-keyboard bind:tap="onHandKeyboardTap" bind:delete="onHandKeyboardDelete" />
 
     <view class="sub-section">
       <view class="section-heading">
@@ -57,7 +49,11 @@
       <block wx:for="{{melds}}" wx:key="id">
         <view class="meld-row" data-index="{{index}}" bindtap="onEditMeld">
           <text class="meld-type">{{item.typeText}}</text>
-          <text class="meld-tiles">{{item.tilesText}}</text>
+          <view class="meld-tiles">
+            <block wx:for="{{item.tiles}}" wx:for-item="tile" wx:key="*this">
+              <tile-image code="{{tile}}" size="small" />
+            </block>
+          </view>
         </view>
       </block>
     </view>
@@ -98,12 +94,17 @@
     </view>
     <view class="field-block">
       <text class="label">宝牌指示牌</text>
-      <input
-        class="input"
-        placeholder="例如：3p 7s"
-        value="{{doraIndicatorsText}}"
-        bindinput="onDoraInput"
-      />
+      <view class="selected-tile-strip dora-strip">
+        <block wx:if="{{doraIndicators.length > 0}}">
+          <block wx:for="{{doraIndicators}}" wx:key="*this">
+            <view class="selected-tile" data-index="{{index}}" bindtap="onDoraTileTap">
+              <tile-image code="{{item}}" size="medium" />
+            </view>
+          </block>
+        </block>
+        <text wx:if="{{doraIndicators.length === 0}}" class="strip-empty">未选择</text>
+      </view>
+      <tile-keyboard bind:tap="onDoraKeyboardTap" bind:delete="onDoraKeyboardDelete" />
     </view>
     <view wx:if="{{mode === '3p'}}" class="field-block">
       <text class="label">拔北数</text>
@@ -129,7 +130,10 @@
   <view wx:if="{{tileEditorVisible}}" class="modal-mask">
     <view class="editor-panel">
       <view class="panel-title">编辑牌</view>
-      <input class="input" value="{{tileEditorValue}}" bindinput="onTileEditorInput" />
+      <view class="editor-tile-preview">
+        <tile-image code="{{tileEditorValue}}" size="large" />
+      </view>
+      <tile-keyboard bind:tap="onTileEditorKeyboardTap" bind:delete="onTileEditorKeyboardDelete" />
       <view class="setting-row">
         <text>设为和牌张</text>
         <switch checked="{{tileEditorWinning}}" color="#176b5b" bindchange="onTileWinningChange" />
@@ -149,12 +153,17 @@
       <picker mode="selector" range="{{meldTypeTexts}}" value="{{meldTypeIndex}}" bindchange="onMeldTypeChange">
         <view class="picker-box">类型：{{meldTypeTexts[meldTypeIndex]}}</view>
       </picker>
-      <input
-        class="input meld-input"
-        placeholder="副露牌，例如：2m 3m 4m"
-        value="{{meldTilesText}}"
-        bindinput="onMeldTilesInput"
-      />
+      <view class="selected-tile-strip meld-editor-strip">
+        <block wx:if="{{meldEditorTiles.length > 0}}">
+          <block wx:for="{{meldEditorTiles}}" wx:key="*this">
+            <view class="selected-tile" data-index="{{index}}" bindtap="onMeldEditorTileTap">
+              <tile-image code="{{item}}" size="medium" />
+            </view>
+          </block>
+        </block>
+        <text wx:if="{{meldEditorTiles.length === 0}}" class="strip-empty">未选择副露牌</text>
+      </view>
+      <tile-keyboard bind:tap="onMeldKeyboardTap" bind:delete="onMeldKeyboardDelete" />
       <view class="button-row panel-actions">
         <button class="danger-button" bindtap="onDeleteMeld">删除</button>
         <button class="secondary-button" bindtap="onCancelMeldEditor">取消</button>

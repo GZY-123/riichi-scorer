@@ -1,0 +1,3 @@
+<view class="tile-image-shell tile-image-{{sizeClass}}">
+  <image class="tile-image-img" src="{{src}}" mode="aspectFit" />
+</view>

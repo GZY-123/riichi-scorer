@@ -33,6 +33,13 @@ interface TapEvent {
   };
 }
 
+interface TileKeyboardEvent {
+  detail: {
+    tile?: string;
+    value?: string;
+  };
+}
+
 interface PlayerState {
   openid: string;
   nickName: string;
@@ -169,7 +176,6 @@ Page({
     confidenceText: "",
     rawText: "",
     tiles: [] as TileCell[],
-    manualTilesText: "",
     melds: [] as MeldView[],
     tileEditorVisible: false,
     tileEditIndex: -1,
@@ -179,10 +185,10 @@ Page({
     meldEditIndex: -1,
     meldTypeIndex: 0,
     meldTypeTexts: MELD_TYPE_OPTIONS.map((option) => option.text),
-    meldTilesText: "",
+    meldEditorTiles: [] as string[],
     riichi: false,
     ippatsu: false,
-    doraIndicatorsText: "",
+    doraIndicators: [] as string[],
     nukiDora: "0",
     scoring: false,
     applying: false,
@@ -296,7 +302,6 @@ Page({
     const melds = this.toMeldViews(result.melds ?? []);
     this.setData({
       tiles,
-      manualTilesText: result.tiles.join(" "),
       melds,
       recognizeState: "识别完成",
       recognizeError: "",
@@ -306,29 +311,18 @@ Page({
     });
   },
 
-  onManualTilesInput(event: InputEvent) {
-    this.setData({ manualTilesText: event.detail.value });
-  },
-
-  onApplyManualTiles() {
-    const tiles = parseTileText(this.data.manualTilesText);
-    const invalid = tiles.find((tile) => !isTileNotation(tile, this.data.mode));
-    if (invalid) {
-      wx.showToast({ title: `${invalid} 不是有效牌`, icon: "none" });
+  onHandKeyboardTap(event: TileKeyboardEvent) {
+    const value = this.tileFromKeyboardEvent(event);
+    if (!value || !this.ensureValidTile(value, "牌")) {
       return;
     }
-    this.setData({
-      tiles: tiles.map((tile, index) => ({
-        id: this.nextTileId(),
-        value: tile,
-        isWinning: index === tiles.length - 1
-      })),
-      scorePreview: null
-    });
+    const tiles = this.data.tiles.map((tile) => ({ ...tile, isWinning: false }));
+    tiles.push({ id: this.nextTileId(), value, isWinning: true });
+    this.syncTiles(tiles);
   },
 
-  onAddTile() {
-    const tiles = [...this.data.tiles, { id: this.nextTileId(), value: "1m", isWinning: this.data.tiles.length === 0 }];
+  onHandKeyboardDelete() {
+    const tiles = this.withWinningTile(this.data.tiles.slice(0, -1));
     this.syncTiles(tiles);
   },
 
@@ -346,8 +340,16 @@ Page({
     });
   },
 
-  onTileEditorInput(event: InputEvent) {
-    this.setData({ tileEditorValue: event.detail.value.trim() });
+  onTileEditorKeyboardTap(event: TileKeyboardEvent) {
+    const value = this.tileFromKeyboardEvent(event);
+    if (!value || !this.ensureValidTile(value, "牌")) {
+      return;
+    }
+    this.setData({ tileEditorValue: value });
+  },
+
+  onTileEditorKeyboardDelete() {
+    this.setData({ tileEditorValue: "" });
   },
 
   onTileWinningChange(event: SwitchEvent) {
@@ -372,10 +374,7 @@ Page({
 
   onDeleteTile() {
     const index = this.data.tileEditIndex;
-    const tiles = this.data.tiles.filter((_, tileIndex) => tileIndex !== index);
-    if (tiles.length > 0 && !tiles.some((tile) => tile.isWinning)) {
-      tiles[tiles.length - 1].isWinning = true;
-    }
+    const tiles = this.withWinningTile(this.data.tiles.filter((_, tileIndex) => tileIndex !== index));
     this.syncTiles(tiles);
     this.setData({ tileEditorVisible: false });
   },
@@ -401,10 +400,8 @@ Page({
       }
       return true;
     });
-    if (tiles.length > 0 && !tiles.some((tile) => tile.isWinning)) {
-      tiles[tiles.length - 1].isWinning = true;
-    }
-    this.syncTiles(tiles);
+    const nextTiles = this.withWinningTile(tiles);
+    this.syncTiles(nextTiles);
     this.setData({
       melds: [
         ...this.data.melds,
@@ -427,7 +424,7 @@ Page({
       meldEditorVisible: true,
       meldEditIndex: -1,
       meldTypeIndex: 0,
-      meldTilesText: ""
+      meldEditorTiles: []
     });
   },
 
@@ -442,7 +439,7 @@ Page({
       meldEditorVisible: true,
       meldEditIndex: index,
       meldTypeIndex,
-      meldTilesText: meld.tiles.join(" ")
+      meldEditorTiles: [...meld.tiles]
     });
   },
 
@@ -450,18 +447,28 @@ Page({
     this.setData({ meldTypeIndex: this.toIndex(event.detail.value) });
   },
 
-  onMeldTilesInput(event: InputEvent) {
-    this.setData({ meldTilesText: event.detail.value });
+  onMeldKeyboardTap(event: TileKeyboardEvent) {
+    const value = this.tileFromKeyboardEvent(event);
+    if (!value || !this.ensureValidTile(value, "副露牌")) {
+      return;
+    }
+    this.setData({ meldEditorTiles: [...this.data.meldEditorTiles, value] });
+  },
+
+  onMeldKeyboardDelete() {
+    this.setData({ meldEditorTiles: this.data.meldEditorTiles.slice(0, -1) });
+  },
+
+  onMeldEditorTileTap(event: TapEvent) {
+    const index = this.toIndex(event.currentTarget.dataset.index);
+    this.setData({
+      meldEditorTiles: this.data.meldEditorTiles.filter((_, tileIndex) => tileIndex !== index)
+    });
   },
 
   onSaveMeld() {
     const type = MELD_TYPE_OPTIONS[this.data.meldTypeIndex]?.value ?? "chi";
-    const tiles = parseTileText(this.data.meldTilesText);
-    const invalid = tiles.find((tile) => !isTileNotation(tile, this.data.mode));
-    if (invalid) {
-      wx.showToast({ title: `${invalid} 不是有效牌`, icon: "none" });
-      return;
-    }
+    const tiles = [...this.data.meldEditorTiles];
     if (!this.isMeldTileCountValid(type, tiles.length)) {
       wx.showToast({ title: "副露张数不正确", icon: "none" });
       return;
@@ -518,8 +525,24 @@ Page({
     this.setData({ ippatsu: event.detail.value, scorePreview: null });
   },
 
-  onDoraInput(event: InputEvent) {
-    this.setData({ doraIndicatorsText: event.detail.value, scorePreview: null });
+  onDoraKeyboardTap(event: TileKeyboardEvent) {
+    const value = this.tileFromKeyboardEvent(event);
+    if (!value || !this.ensureValidTile(value, "宝牌指示牌")) {
+      return;
+    }
+    this.setData({ doraIndicators: [...this.data.doraIndicators, value], scorePreview: null });
+  },
+
+  onDoraKeyboardDelete() {
+    this.setData({ doraIndicators: this.data.doraIndicators.slice(0, -1), scorePreview: null });
+  },
+
+  onDoraTileTap(event: TapEvent) {
+    const index = this.toIndex(event.currentTarget.dataset.index);
+    this.setData({
+      doraIndicators: this.data.doraIndicators.filter((_, tileIndex) => tileIndex !== index),
+      scorePreview: null
+    });
   },
 
   onNukiDoraInput(event: InputEvent) {
@@ -548,12 +571,7 @@ Page({
       return;
     }
     const winningTile = this.data.tiles.find((tile) => tile.isWinning)?.value ?? tiles[tiles.length - 1];
-    const doraIndicators = parseTileText(this.data.doraIndicatorsText);
-    const invalidDora = doraIndicators.find((tile) => !isTileNotation(tile, this.data.mode));
-    if (invalidDora) {
-      wx.showToast({ title: `${invalidDora} 不是有效宝牌`, icon: "none" });
-      return;
-    }
+    const doraIndicators = [...this.data.doraIndicators];
     const nukiDora = this.parseNonNegativeInteger(this.data.nukiDora, "拔北数");
     if (nukiDora === undefined) {
       return;
@@ -668,9 +686,30 @@ Page({
   syncTiles(tiles: TileCell[]) {
     this.setData({
       tiles,
-      manualTilesText: tiles.map((tile) => tile.value).join(" "),
       scorePreview: null
     });
+  },
+
+  withWinningTile(tiles: TileCell[]): TileCell[] {
+    if (tiles.length === 0 || tiles.some((tile) => tile.isWinning)) {
+      return tiles;
+    }
+    return tiles.map((tile, index) => ({
+      ...tile,
+      isWinning: index === tiles.length - 1
+    }));
+  },
+
+  tileFromKeyboardEvent(event: TileKeyboardEvent): string {
+    return (event.detail.tile ?? event.detail.value ?? "").trim();
+  },
+
+  ensureValidTile(value: string, label: string): boolean {
+    if (isTileNotation(value, this.data.mode)) {
+      return true;
+    }
+    wx.showToast({ title: `${value} 不是有效${label}`, icon: "none" });
+    return false;
   },
 
   toMeldViews(melds: MeldInput[]): MeldView[] {
@@ -765,13 +804,6 @@ Page({
     wx.showToast({ title: message, icon: "none" });
   }
 });
-
-function parseTileText(value: string): string[] {
-  return value
-    .split(/[\s,，、/]+/)
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-}
 
 function isTileNotation(tile: string, mode: GameMode): boolean {
   if (!/^[0-9][mpsz]$/.test(tile)) {

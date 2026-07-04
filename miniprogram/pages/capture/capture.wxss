@@ -89,6 +89,7 @@
   position: relative;
   aspect-ratio: 0.72;
   min-height: 116rpx;
+  padding: 4rpx 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,6 +102,10 @@
   font-size: 28rpx;
   font-weight: 700;
   box-sizing: border-box;
+}
+
+.tile-cell:active {
+  transform: scale(0.97);
 }
 
 .tile-cell.winning {
@@ -118,18 +123,15 @@
   font-weight: 700;
 }
 
-.manual-input {
-  width: 100%;
-  height: 140rpx;
-  min-height: 0;
+.keyboard-status {
   margin-top: 22rpx;
-  padding: 18rpx;
-  border: 1rpx solid var(--ivory-edge);
-  border-radius: 12rpx;
-  background: #fdfcf8;
-  box-sizing: border-box;
-  color: var(--ink);
-  font-size: 28rpx;
+  color: #65736e;
+  font-size: 24rpx;
+}
+
+tile-keyboard {
+  display: block;
+  margin-top: 12rpx;
 }
 
 .sub-section {
@@ -144,14 +146,19 @@
 }
 
 .meld-type {
+  flex: 0 0 auto;
   color: #176b5b;
   font-size: 26rpx;
   font-weight: 700;
 }
 
 .meld-tiles {
-  color: #17211f;
-  font-size: 28rpx;
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
+  gap: 6rpx;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .setting-row {
@@ -197,6 +204,43 @@
 
 .field-block {
   margin-top: 18rpx;
+}
+
+.selected-tile-strip {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-height: 104rpx;
+  padding: 12rpx;
+  border: 1rpx solid var(--ivory-edge);
+  border-radius: 14rpx;
+  background: #fdfcf8;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.dora-strip,
+.meld-editor-strip {
+  margin-bottom: 12rpx;
+}
+
+.selected-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rpx;
+  border-radius: 9rpx;
+  background: rgba(15, 83, 66, 0.06);
+}
+
+.selected-tile:active {
+  transform: scale(0.96);
+  opacity: 0.72;
+}
+
+.strip-empty {
+  color: var(--muted);
+  font-size: 26rpx;
 }
 
 .score-main {
@@ -256,7 +300,17 @@
   font-weight: 700;
 }
 
-.meld-input,
+.editor-tile-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 128rpx;
+  margin-bottom: 12rpx;
+  border: 1rpx solid var(--ivory-edge);
+  border-radius: 16rpx;
+  background: #fdfcf8;
+}
+
 .panel-actions {
   margin-top: 22rpx;
 }

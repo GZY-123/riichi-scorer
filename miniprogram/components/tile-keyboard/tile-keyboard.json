@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "tile-image": "../tile-image/tile-image"
+  }
+}

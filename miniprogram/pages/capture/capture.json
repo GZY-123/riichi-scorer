@@ -1,3 +1,7 @@
 {
-  "navigationBarTitleText": "拍照识别算点"
+  "navigationBarTitleText": "拍照识别算点",
+  "usingComponents": {
+    "tile-image": "../../components/tile-image/tile-image",
+    "tile-keyboard": "../../components/tile-keyboard/tile-keyboard"
+  }
 }
