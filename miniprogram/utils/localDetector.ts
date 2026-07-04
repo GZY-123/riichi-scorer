@@ -151,7 +151,22 @@ async function ensureModelFile(onProgress?: ProgressCallback): Promise<string> {
   return MODEL_CACHE_PATH;
 }
 
-function downloadCloudFile(fileID: string, onProgress?: ProgressCallback): Promise<string> {
+async function downloadCloudFile(fileID: string, onProgress?: ProgressCallback): Promise<string> {
+  try {
+    return await downloadViaCloudApi(fileID, onProgress);
+  } catch (primaryError) {
+    // 开发者工具的 wx.cloud.downloadFile 偶发 "empty download url"，换临时链接直载兜底
+    try {
+      return await downloadViaTempUrl(fileID, onProgress);
+    } catch (fallbackError) {
+      throw new Error(
+        `云存储模型下载失败：${errorMessage(primaryError)}；备用链路：${errorMessage(fallbackError)}`
+      );
+    }
+  }
+}
+
+function downloadViaCloudApi(fileID: string, onProgress?: ProgressCallback): Promise<string> {
   return new Promise((resolve, reject) => {
     const task = wx.cloud.downloadFile({
       fileID,
@@ -163,8 +178,36 @@ function downloadCloudFile(fileID: string, onProgress?: ProgressCallback): Promi
         resolve(result.tempFilePath);
       },
       fail: (error) => {
-        reject(new Error(`云存储模型下载失败：${errorMessage(error)}`));
+        reject(new Error(errorMessage(error)));
       }
+    });
+    task.onProgressUpdate((result) => {
+      onProgress?.({
+        phase: "download",
+        progress: result.progress,
+        message: `本地识别中：下载模型 ${result.progress}%`
+      });
+    });
+  });
+}
+
+async function downloadViaTempUrl(fileID: string, onProgress?: ProgressCallback): Promise<string> {
+  const urlResult = await wx.cloud.getTempFileURL({ fileList: [fileID] });
+  const tempUrl = urlResult.fileList?.[0]?.tempFileURL;
+  if (!tempUrl) {
+    throw new Error(`getTempFileURL 未返回下载地址（${urlResult.fileList?.[0]?.errMsg ?? "未知原因"}）`);
+  }
+  return new Promise((resolve, reject) => {
+    const task = wx.downloadFile({
+      url: tempUrl,
+      success: (result) => {
+        if (result.statusCode !== 200 || !result.tempFilePath) {
+          reject(new Error(`临时链接下载失败 HTTP ${result.statusCode}`));
+          return;
+        }
+        resolve(result.tempFilePath);
+      },
+      fail: (error) => reject(new Error(errorMessage(error)))
     });
     task.onProgressUpdate((result) => {
       onProgress?.({
