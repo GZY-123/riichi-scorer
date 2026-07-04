@@ -1,3 +1,5 @@
+import { detectTilesOnDevice } from "../../utils/localDetector";
+
 type GameMode = "3p" | "4p";
 type Seat = "east" | "south" | "west" | "north";
 type WinType = "ron" | "tsumo";
@@ -252,37 +254,55 @@ Page({
       const tempFilePath = await this.compressForRecognition(await this.chooseImage());
       this.setData({
         imageTempPath: tempFilePath,
-        recognizeState: "上传图片中",
+        recognizeState: "本地识别中",
         recognizeError: "",
+        confidenceText: "",
+        rawText: "",
         scorePreview: null
       });
-      const fileID = await this.uploadImage(tempFilePath);
-      this.setData({ recognizeState: "识别中" });
-      const response = (await wx.cloud.callFunction({
-        name: "recognizeTiles",
-        data: {
-          fileID,
-          mode: this.data.mode
-        }
-      })) as unknown as { result?: RecognizeResult };
-      const result = response.result;
-      if (!result) {
-        throw new Error("识别服务无返回");
-      }
-      if (result.errorCode) {
-        this.setData({
-          recognizeState: "识别失败，可手动录入",
-          recognizeError: result.message ?? result.errorCode,
-          rawText: result.rawText ?? ""
-        });
-        return;
-      }
 
-      this.applyRecognizedResult(result);
+      try {
+        const localResult = await detectTilesOnDevice(tempFilePath, (progress) => {
+          this.setData({ recognizeState: progress.message });
+        });
+        this.applyRecognizedResult(localResult);
+        return;
+      } catch (localError) {
+        await this.recognizeWithCloudFallback(tempFilePath, this.errorMessage(localError));
+      }
     } catch (error) {
       this.setData({ recognizeState: "识别失败，可手动录入" });
       this.showError(error, "识别失败");
     }
+  },
+
+  async recognizeWithCloudFallback(tempFilePath: string, localErrorMessage: string) {
+    this.setData({
+      recognizeState: "云端识别中（本地不可用）",
+      recognizeError: `本地识别不可用：${localErrorMessage}`
+    });
+    const fileID = await this.uploadImage(tempFilePath);
+    const response = (await wx.cloud.callFunction({
+      name: "recognizeTiles",
+      data: {
+        fileID,
+        mode: this.data.mode
+      }
+    })) as unknown as { result?: RecognizeResult };
+    const result = response.result;
+    if (!result) {
+      throw new Error("识别服务无返回");
+    }
+    if (result.errorCode) {
+      this.setData({
+        recognizeState: "识别失败，可手动录入",
+        recognizeError: result.message ?? result.errorCode,
+        rawText: result.rawText ?? ""
+      });
+      return;
+    }
+
+    this.applyRecognizedResult(result);
   },
 
   onManualOnlyTap() {
@@ -800,8 +820,21 @@ Page({
   },
 
   showError(error: unknown, fallback: string) {
-    const message = error instanceof Error ? error.message : fallback;
+    const message = this.errorMessage(error) || fallback;
     wx.showToast({ title: message, icon: "none" });
+  },
+
+  errorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "object" && error !== null && "errMsg" in error) {
+      const errMsg = (error as { errMsg?: unknown }).errMsg;
+      if (typeof errMsg === "string" && errMsg.trim()) {
+        return errMsg;
+      }
+    }
+    return String(error);
   }
 });
 

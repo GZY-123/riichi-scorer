@@ -4,16 +4,42 @@
 
 本链路从房间页进入 `pages/capture/capture`：
 
-1. 小程序选择拍照或相册图片，上传到云存储。
-2. `recognizeTiles` 云函数下载图片，按 `VISION_PROVIDER` 选择视觉 Provider。
-3. 视觉 Provider 调用 DashScope 大模型或 Roboflow 检测模型，统一返回严格 JSON。
-4. `cloudfunctions/common/recognition.ts` 剥离 markdown 围栏和前后说明文字，解析并校验牌记法。
-5. capture 页展示牌面网格，用户可逐张修改、增删、设和牌张，或编辑副露与场况。
-6. `scoreHand` 云函数读取房间玩家和局况，调用部署目录内的 `engine-lib` 算役、番符、点数。
-7. `cloudfunctions/common/scoreLogic.ts` 生成 `applyEvent` 所需的 `deltas`、供托变化、本场变化和是否推进局数。
-8. 用户确认后，小程序调用既有 `applyEvent` 云函数事务落账。
+1. 小程序选择拍照或相册图片，先压缩到适合识别的尺寸。
+2. capture 页优先使用端侧 ONNX 模型识别：下载并缓存模型，离屏 canvas letterbox 到 640x640，调用 `wx.createInferenceSession` 推理，再按检测框位置整理为 `tiles`。
+3. 如果端侧模型未配置、下载失败、基础库不支持或推理异常，capture 页自动回退到云端识别：上传图片到云存储。
+4. `recognizeTiles` 云函数下载图片，按 `VISION_PROVIDER` 选择视觉 Provider。
+5. 视觉 Provider 调用 DashScope 大模型或 Roboflow 检测模型，统一返回严格 JSON。
+6. `cloudfunctions/common/recognition.ts` 剥离 markdown 围栏和前后说明文字，解析并校验牌记法。
+7. capture 页展示牌面网格，用户可逐张修改、增删、设和牌张，或编辑副露与场况。
+8. `scoreHand` 云函数读取房间玩家和局况，调用部署目录内的 `engine-lib` 算役、番符、点数。
+9. `cloudfunctions/common/scoreLogic.ts` 生成 `applyEvent` 所需的 `deltas`、供托变化、本场变化和是否推进局数。
+10. 用户确认后，小程序调用既有 `applyEvent` 云函数事务落账。
 
 识别失败不会中断流程；capture 页会显示失败原因，并允许直接手动录入牌面继续算点。
+
+## 端侧模型
+
+端侧识别使用自训 YOLOv8n ONNX 模型，输入为 float32 `[1,3,640,640]`，输出为 `[1,42,8400]`：前 4 行是 `cx, cy, w, h`，后 38 行是类别分数，不含 objectness。类别顺序写死在 `miniprogram/utils/yoloDecode.ts`，不要在不重新导出模型的情况下调整。
+
+### 上传和配置
+
+1. 在微信云开发控制台打开当前环境的云存储。
+2. 拖拽上传导出的 `best-fp32.onnx`。
+3. 复制上传后的 `fileID`。
+4. 将 `miniprogram/env.ts` 里的 `TILE_MODEL_FILE_ID` 从占位值改成复制的 `fileID`。
+5. 重新上传小程序代码。
+
+`TILE_MODEL_FILE_ID` 只保存云存储 fileID，不保存任何密钥。模型约 12 MB，首次识别会下载到本地用户目录：
+
+```text
+${wx.env.USER_DATA_PATH}/tile-model.onnx
+```
+
+缓存存在时会直接复用，不再访问云存储。若替换了模型但文件名和缓存路径不变，需要清理小程序本地缓存或改代码中的缓存策略后重新发布。
+
+### 回退链路
+
+端侧路径失败时不会阻塞用户：capture 页会显示“云端识别中（本地不可用）”，随后走原来的图片上传和 `recognizeTiles` 云函数。端侧成功时不会上传图片，直接进入牌面修正界面；检测模型不区分副露，副露仍需在界面手动标注。
 
 ## 云函数环境变量
 
