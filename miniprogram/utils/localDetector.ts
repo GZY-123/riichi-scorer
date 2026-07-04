@@ -1,4 +1,4 @@
-import { TILE_MODEL_FILE_ID } from "../env";
+import { TILE_MODEL_FILE_ID, TILE_MODEL_INPUT_SIZE } from "../env";
 import { detectionToTiles } from "./detectionToTiles";
 import { decodeYoloOutput } from "./yoloDecode";
 import type { LetterboxInfo } from "./yoloDecode";
@@ -29,8 +29,17 @@ interface OffscreenImage {
 
 type ProgressCallback = (progress: LocalDetectorProgress) => void;
 
-const MODEL_CACHE_PATH = `${wx.env.USER_DATA_PATH}/tile-model.onnx`;
-const INPUT_SIZE = 640;
+// 缓存名含 fileID 指纹：换模型（新 fileID）自动触发重新下载，旧缓存不会顶掉新模型
+const MODEL_CACHE_PATH = `${wx.env.USER_DATA_PATH}/tile-model-${cacheFingerprint(TILE_MODEL_FILE_ID)}.onnx`;
+const INPUT_SIZE = TILE_MODEL_INPUT_SIZE;
+
+function cacheFingerprint(fileID: string): string {
+  let hash = 0;
+  for (let index = 0; index < fileID.length; index += 1) {
+    hash = (hash * 31 + fileID.charCodeAt(index)) >>> 0;
+  }
+  return hash.toString(36);
+}
 const INPUT_TENSOR_NAME = "images";
 const OUTPUT_TENSOR_NAME = "output0";
 const MODEL_PLACEHOLDER_MARKERS = ["your-env-id", "path/to", "TODO"];
