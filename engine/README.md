@@ -43,7 +43,7 @@ const score = calcScore({ han: yaku.han, fu: fu.fu, winType: "tsumo", isDealer: 
 
 ## Rule Coverage
 
-Implemented yaku include standard one-han through six-han yaku, yakuhai counted per value triplet, open-hand downgrades for chanta/ittsuu/sanshoku/honitsu/junchan/chinitsu, dora/ura/aka/nuki as non-yaku han, and yakuman including double yakuman variants for kokushi 13-sided, suuankou tanki, daisuushi, and pure nine gates.
+Implemented yaku names are returned in Simplified Chinese. Coverage includes standard one-han through six-han yaku, yakuhai counted per value triplet, open-hand downgrades for 混全带幺九 / 一气通贯 / 三色同顺 / 混一色 / 纯全带幺九 / 清一色, 宝牌 / 里宝牌 / 赤宝牌 / 拔北宝牌 as non-yaku han, and yakuman including double-yakuman variants for 国士无双十三面, 四暗刻单骑, 大四喜, and 纯正九莲宝灯.
 
 Fu calculation covers base fu, chiitoitsu fixed 25, pinfu tsumo fixed 20, menzen ron, value pair, wait fu, triplet/quad fu, ron-completed shanpon triplets, and rounding.
 

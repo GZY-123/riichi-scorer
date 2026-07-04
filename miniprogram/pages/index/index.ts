@@ -134,6 +134,12 @@ Page({
     });
   },
 
+  onYakuReferenceTap() {
+    wx.navigateTo({
+      url: "/pages/yaku-reference/yaku-reference"
+    });
+  },
+
   onCancelProfileEdit() {
     if (this.data.profileSaved) {
       this.setData({ editingProfile: false });

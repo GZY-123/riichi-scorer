@@ -357,6 +357,12 @@ Page({
     });
   },
 
+  onYakuReferenceTap() {
+    wx.navigateTo({
+      url: "/pages/yaku-reference/yaku-reference"
+    });
+  },
+
   applyRecognizedResult(result: RecognizeResult) {
     const tiles = result.tiles.map((tile, index) => ({
       id: this.nextTileId(),

@@ -2,6 +2,7 @@
   <view class="hero">
     <view class="title">立直麻将记分<text class="title-dot"></text></view>
     <view class="subtitle">三麻 / 四麻 · 房间码同桌实时记分</view>
+    <button class="text-link" bindtap="onYakuReferenceTap">查看役种表</button>
   </view>
 
   <view class="section panel profile-panel">

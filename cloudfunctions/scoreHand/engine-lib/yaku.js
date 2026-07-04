@@ -3,6 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.detectYaku = detectYaku;
 exports.isValuePair = isValuePair;
 const tiles_js_1 = require("./tiles.js");
+const DRAGON_TILES = ["5z", "6z", "7z"];
+const DRAGON_YAKU_NAMES = {
+    "5z": "役牌 白",
+    "6z": "役牌 发",
+    "7z": "役牌 中"
+};
 function detectYaku(input, context = {}) {
     if (Array.isArray(input)) {
         const results = input.map((division) => detectYakuForDivision(division, context));
@@ -30,64 +36,64 @@ function detectYakuForDivision(division, context) {
         yaku.push({ id, name, han });
     };
     if (context.doubleRiichi)
-        add("double-riichi", "Double Riichi", 2);
+        add("double-riichi", "两立直", 2);
     else if (context.riichi)
-        add("riichi", "Riichi", 1);
+        add("riichi", "立直", 1);
     if (context.ippatsu && (context.riichi || context.doubleRiichi))
-        add("ippatsu", "Ippatsu", 1);
+        add("ippatsu", "一发", 1);
     if (closed && winType === "tsumo")
-        add("menzen-tsumo", "Menzen Tsumo", 1);
+        add("menzen-tsumo", "门前清自摸和", 1);
     if (allTiles(division).every(tiles_js_1.isSimple))
-        add("tanyao", "Tanyao", 1);
+        add("tanyao", "断幺九", 1);
     if (isPinfu(division, context, closed))
-        add("pinfu", "Pinfu", 1);
+        add("pinfu", "平和", 1);
     const ryanpeikou = closed && division.pattern === "standard" && countIdenticalSequencePairs(division) >= 2;
     if (ryanpeikou) {
-        add("ryanpeikou", "Ryanpeikou", 3);
+        add("ryanpeikou", "二杯口", 3);
     }
     else if (closed && division.pattern === "standard" && countIdenticalSequencePairs(division) >= 1) {
-        add("iipeikou", "Iipeikou", 1);
+        add("iipeikou", "一杯口", 1);
     }
     for (const yakuhai of detectYakuhai(division, context)) {
         yaku.push(yakuhai);
     }
     if (context.rinshan)
-        add("rinshan-kaihou", "Rinshan Kaihou", 1);
+        add("rinshan-kaihou", "岭上开花", 1);
     if (context.chankan)
-        add("chankan", "Chankan", 1);
+        add("chankan", "抢杠", 1);
     if (context.haitei && winType === "tsumo")
-        add("haitei", "Haitei", 1);
+        add("haitei", "海底摸月", 1);
     if (context.hotei && winType === "ron")
-        add("houtei", "Houtei", 1);
+        add("houtei", "河底捞鱼", 1);
     if (division.pattern === "seven-pairs")
-        add("chiitoitsu", "Chiitoitsu", 2);
+        add("chiitoitsu", "七对子", 2);
     const chanta = isChanta(division);
     const junchan = isJunchan(division);
     if (junchan)
-        add("junchan", "Junchan", closed ? 3 : 2);
+        add("junchan", "纯全带幺九", closed ? 3 : 2);
     else if (chanta)
-        add("chanta", "Chanta", closed ? 2 : 1);
+        add("chanta", "混全带幺九", closed ? 2 : 1);
     if (isIttsuu(division))
-        add("ittsuu", "Ittsuu", closed ? 2 : 1);
+        add("ittsuu", "一气通贯", closed ? 2 : 1);
     if (isSanshokuDoujun(division))
-        add("sanshoku-doujun", "Sanshoku Doujun", closed ? 2 : 1);
+        add("sanshoku-doujun", "三色同顺", closed ? 2 : 1);
     if (isSanshokuDoukou(division))
-        add("sanshoku-doukou", "Sanshoku Doukou", 2);
+        add("sanshoku-doukou", "三色同刻", 2);
     if (countConcealedTriplets(division, context, winType) >= 3)
-        add("sanankou", "Sanankou", 2);
+        add("sanankou", "三暗刻", 2);
     if (countQuads(division) >= 3)
-        add("sankantsu", "Sankantsu", 2);
+        add("sankantsu", "三杠子", 2);
     if (isToitoi(division))
-        add("toitoi", "Toitoi", 2);
+        add("toitoi", "对对和", 2);
     if (isShousangen(division))
-        add("shousangen", "Shousangen", 2);
+        add("shousangen", "小三元", 2);
     if (isHonroutou(division))
-        add("honroutou", "Honroutou", 2);
+        add("honroutou", "混老头", 2);
     const flush = flushType(division);
     if (flush === "chinitsu")
-        add("chinitsu", "Chinitsu", closed ? 6 : 5);
+        add("chinitsu", "清一色", closed ? 6 : 5);
     else if (flush === "honitsu")
-        add("honitsu", "Honitsu", closed ? 3 : 2);
+        add("honitsu", "混一色", closed ? 3 : 2);
     const yakuHan = yaku.reduce((sum, item) => sum + (item.han ?? 0), 0);
     const dora = detectDora(division, context);
     const doraHan = dora.reduce((sum, item) => sum + (item.han ?? 0), 0);
@@ -106,37 +112,37 @@ function detectYakuman(division, context, winType, closed) {
         yakuman.push({ id, name, yakuman: multiplier, isYakuman: true });
     };
     if (context.tenhou)
-        add("tenhou", "Tenhou");
+        add("tenhou", "天和");
     if (context.chiihou)
-        add("chiihou", "Chiihou");
+        add("chiihou", "地和");
     if (division.pattern === "thirteen-orphans") {
-        add(division.isThirteenSided ? "kokushi-13" : "kokushi", division.isThirteenSided ? "Kokushi Musou 13-sided" : "Kokushi Musou", division.isThirteenSided ? 2 : 1);
+        add(division.isThirteenSided ? "kokushi-13" : "kokushi", division.isThirteenSided ? "国士无双十三面" : "国士无双", division.isThirteenSided ? 2 : 1);
     }
     if (division.pattern === "standard") {
         const concealedTriplets = countConcealedTriplets(division, context, winType);
         if (concealedTriplets === 4) {
-            add(division.wait === "tanki" ? "suuankou-tanki" : "suuankou", division.wait === "tanki" ? "Suuankou Tanki" : "Suuankou", division.wait === "tanki" ? 2 : 1);
+            add(division.wait === "tanki" ? "suuankou-tanki" : "suuankou", division.wait === "tanki" ? "四暗刻单骑" : "四暗刻", division.wait === "tanki" ? 2 : 1);
         }
         if (["5z", "6z", "7z"].every((tile) => hasTripletOf(division, tile)))
-            add("daisangen", "Daisangen");
+            add("daisangen", "大三元");
         if (allTiles(division).every(tiles_js_1.isHonor))
-            add("tsuuiisou", "Tsuuiisou");
+            add("tsuuiisou", "字一色");
         const windTriplets = ["1z", "2z", "3z", "4z"].filter((tile) => hasTripletOf(division, tile));
         const windPair = division.pair?.[0] !== undefined && (0, tiles_js_1.isWind)(division.pair[0]) ? division.pair[0] : undefined;
         if (windTriplets.length === 4)
-            add("daisuushi", "Daisuushi", 2);
+            add("daisuushi", "大四喜", 2);
         else if (windTriplets.length === 3 && windPair !== undefined)
-            add("shousuushi", "Shousuushi");
+            add("shousuushi", "小四喜");
         if (isRyuuiisou(division))
-            add("ryuuiisou", "Ryuuiisou");
+            add("ryuuiisou", "绿一色");
         if (allTiles(division).every(tiles_js_1.isTerminal))
-            add("chinroutou", "Chinroutou");
+            add("chinroutou", "清老头");
         const chuuren = chuurenInfo(division, closed);
         if (chuuren.isChuuren) {
-            add(chuuren.pure ? "junsei-chuuren" : "chuuren", chuuren.pure ? "Junsei Chuuren Poutou" : "Chuuren Poutou", chuuren.pure ? 2 : 1);
+            add(chuuren.pure ? "junsei-chuuren" : "chuuren", chuuren.pure ? "纯正九莲宝灯" : "九莲宝灯", chuuren.pure ? 2 : 1);
         }
         if (countQuads(division) === 4)
-            add("suukantsu", "Suukantsu");
+            add("suukantsu", "四杠子");
     }
     return yakuman;
 }
@@ -146,19 +152,19 @@ function detectYakuhai(division, context) {
     const yaku = [];
     const seatWind = (0, tiles_js_1.windToTile)(context.seatWind);
     const prevalentWind = (0, tiles_js_1.windToTile)(context.prevalentWind);
-    for (const tile of ["5z", "6z", "7z"]) {
+    for (const tile of DRAGON_TILES) {
         if (hasTripletOf(division, tile)) {
-            yaku.push({ id: `yakuhai-${tile}`, name: `Yakuhai ${tile}`, han: 1 });
+            yaku.push({ id: `yakuhai-${tile}`, name: DRAGON_YAKU_NAMES[tile], han: 1 });
         }
     }
     if (seatWind !== undefined && hasTripletOf(division, seatWind)) {
-        yaku.push({ id: "yakuhai-seat-wind", name: "Yakuhai Seat Wind", han: 1 });
+        yaku.push({ id: "yakuhai-seat-wind", name: "自风牌", han: 1 });
     }
     if (prevalentWind !== undefined && hasTripletOf(division, prevalentWind)) {
-        yaku.push({ id: "yakuhai-prevalent-wind", name: "Yakuhai Prevalent Wind", han: 1 });
+        yaku.push({ id: "yakuhai-prevalent-wind", name: "场风牌", han: 1 });
     }
     if (context.mode === "3p" && hasTripletOf(division, "4z")) {
-        yaku.push({ id: "yakuhai-north", name: "Yakuhai North", han: 1 });
+        yaku.push({ id: "yakuhai-north", name: "役牌 北", han: 1 });
     }
     return yaku;
 }
@@ -167,18 +173,18 @@ function detectDora(division, context) {
     const tiles = division.tiles;
     const doraHan = countDora(tiles, context.doraIndicators ?? []);
     if (doraHan > 0)
-        yaku.push({ id: "dora", name: "Dora", han: doraHan, isDora: true });
+        yaku.push({ id: "dora", name: "宝牌", han: doraHan, isDora: true });
     const uraHan = countDora(tiles, context.uraDoraIndicators ?? []);
     if (uraHan > 0)
-        yaku.push({ id: "ura-dora", name: "Ura Dora", han: uraHan, isDora: true });
+        yaku.push({ id: "ura-dora", name: "里宝牌", han: uraHan, isDora: true });
     if (context.redDora !== false) {
         const redHan = tiles.filter(tiles_js_1.isRedFive).length;
         if (redHan > 0)
-            yaku.push({ id: "aka-dora", name: "Aka Dora", han: redHan, isDora: true });
+            yaku.push({ id: "aka-dora", name: "赤宝牌", han: redHan, isDora: true });
     }
     const nukiHan = context.nukiDora ?? division.nukiDora;
     if ((context.mode ?? "4p") === "3p" && nukiHan > 0) {
-        yaku.push({ id: "nuki-dora", name: "Nuki Dora", han: nukiHan, isDora: true });
+        yaku.push({ id: "nuki-dora", name: "拔北宝牌", han: nukiHan, isDora: true });
     }
     return yaku;
 }

@@ -61,7 +61,10 @@
   </view>
 
   <view class="section panel">
-    <view class="section-title">场况</view>
+    <view class="section-heading">
+      <view class="section-title">场况</view>
+      <button class="mini-button" bindtap="onYakuReferenceTap">役种表</button>
+    </view>
     <view class="setting-row">
       <text>和牌者</text>
       <picker mode="selector" range="{{playerNames}}" value="{{winnerIndex}}" bindchange="onWinnerChange">

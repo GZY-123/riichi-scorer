@@ -1,0 +1,24 @@
+<view class="page yaku-reference-page">
+  <view class="panel intro-panel">
+    <view class="page-title">役种表</view>
+    <view class="rule-line">宝牌 / 里宝牌 / 赤宝牌计番不计役，必须另有役才能和牌。</view>
+  </view>
+
+  <block wx:for="{{groups}}" wx:key="title">
+    <view class="section panel group-panel">
+      <view class="group-title">{{item.title}}</view>
+      <block wx:for="{{item.items}}" wx:for-item="yaku" wx:key="key">
+        <view class="yaku-item">
+          <view class="yaku-head">
+            <view class="yaku-name-row">
+              <text class="yaku-name">{{yaku.name}}</text>
+              <text wx:if="{{yaku.menzenOnly}}" class="menzen-badge">门清</text>
+            </view>
+            <text class="yaku-han">{{yaku.han}}</text>
+          </view>
+          <view class="yaku-desc">{{yaku.desc}}</view>
+        </view>
+      </block>
+    </view>
+  </block>
+</view>
