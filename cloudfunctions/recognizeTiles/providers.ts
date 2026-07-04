@@ -1,4 +1,6 @@
 import type { GameMode } from "../common/roomLogic";
+import { detectionToTiles } from "../common/detectionToTiles";
+import type { TileDetection } from "../common/detectionToTiles";
 
 declare const process: {
   env: Record<string, string | undefined>;
@@ -22,6 +24,21 @@ export function createVisionProvider(): VisionProvider {
   const provider = (process.env.VISION_PROVIDER ?? "dashscope").toLowerCase();
   if (provider === "mock") {
     return new MockVisionProvider(process.env.MOCK_VISION_RESPONSE);
+  }
+  if (provider === "roboflow") {
+    const apiKey = process.env.ROBOFLOW_API_KEY?.trim();
+    const model = process.env.ROBOFLOW_MODEL?.trim();
+    if (!apiKey) {
+      throw new Error("缺少 ROBOFLOW_API_KEY 云函数环境变量，请在 Roboflow 获取 Private API Key 后配置");
+    }
+    if (!model) {
+      throw new Error("缺少 ROBOFLOW_MODEL 云函数环境变量，请填写 Roboflow Hosted API 的 model/version");
+    }
+    return new RoboflowProvider({
+      apiKey,
+      model,
+      confidence: process.env.ROBOFLOW_CONFIDENCE?.trim() || "0.4"
+    });
   }
   if (provider === "dashscope" || provider === "qwen-vl-max") {
     const apiKey = process.env.DASHSCOPE_API_KEY;
@@ -89,6 +106,28 @@ export class DashScopeVisionProvider implements VisionProvider {
       throw new Error("视觉模型没有返回可解析内容");
     }
     return content;
+  }
+}
+
+export class RoboflowProvider implements VisionProvider {
+  constructor(
+    private readonly options: {
+      apiKey: string;
+      model: string;
+      confidence: string;
+    }
+  ) {}
+
+  async recognize(input: VisionProviderInput): Promise<string> {
+    const response = await postFormJson(buildRoboflowEndpoint(this.options), input.imageBase64);
+    const detections = normalizeRoboflowPredictions(response);
+    const result = detectionToTiles(detections);
+    return JSON.stringify({
+      tiles: result.tiles,
+      melds: [],
+      confidence: result.confidence,
+      notes: "检测模型不区分副露，请在界面手动标注副露"
+    });
   }
 }
 
@@ -174,6 +213,114 @@ async function postJson(endpoint: string, apiKey: string, body: unknown): Promis
     request.write(payload);
     request.end();
   });
+}
+
+async function postFormJson(endpoint: string, body: string): Promise<unknown> {
+  const https = require("https") as {
+    request(
+      options: Record<string, unknown>,
+      callback: (response: {
+        statusCode?: number;
+        setEncoding(encoding: string): void;
+        on(event: "data", callback: (chunk: string) => void): void;
+        on(event: "end", callback: () => void): void;
+      }) => void
+    ): {
+      on(event: "error", callback: (error: Error) => void): void;
+      write(data: string): void;
+      end(): void;
+    };
+  };
+  const url = new URL(endpoint);
+
+  return new Promise((resolve, reject) => {
+    const request = https.request(
+      {
+        method: "POST",
+        protocol: url.protocol,
+        hostname: url.hostname,
+        path: `${url.pathname}${url.search}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": String(Buffer.byteLength(body, "utf8"))
+        }
+      },
+      (response) => {
+        response.setEncoding("utf8");
+        let text = "";
+        response.on("data", (chunk) => {
+          text += chunk;
+        });
+        response.on("end", () => {
+          if ((response.statusCode ?? 500) >= 400) {
+            reject(new Error(`Roboflow 调用失败 ${response.statusCode}: ${text.slice(0, 200)}`));
+            return;
+          }
+          try {
+            resolve(JSON.parse(text));
+          } catch {
+            reject(new Error("Roboflow 响应不是 JSON"));
+          }
+        });
+      }
+    );
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
+
+function buildRoboflowEndpoint(options: {
+  apiKey: string;
+  model: string;
+  confidence: string;
+}): string {
+  const modelPath = options.model
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `https://detect.roboflow.com/${modelPath}?api_key=${encodeURIComponent(
+    options.apiKey
+  )}&confidence=${encodeURIComponent(options.confidence)}`;
+}
+
+function normalizeRoboflowPredictions(response: unknown): TileDetection[] {
+  if (!isRecord(response)) {
+    throw new Error("Roboflow 响应顶层必须是对象");
+  }
+  if (!Array.isArray(response.predictions)) {
+    throw new Error("Roboflow 响应缺少 predictions 数组");
+  }
+
+  return response.predictions.map((prediction, index) => {
+    if (!isRecord(prediction)) {
+      throw new Error(`Roboflow 第 ${index + 1} 个检测框不是对象`);
+    }
+    const className = prediction.class;
+    if (typeof className !== "string" || !className.trim()) {
+      throw new Error(`Roboflow 第 ${index + 1} 个检测框缺少 class`);
+    }
+    return {
+      x: readFiniteNumber(prediction.x, `Roboflow 第 ${index + 1} 个检测框 x 无效`),
+      y: readFiniteNumber(prediction.y, `Roboflow 第 ${index + 1} 个检测框 y 无效`),
+      width: readFiniteNumber(prediction.width, `Roboflow 第 ${index + 1} 个检测框 width 无效`),
+      height: readFiniteNumber(prediction.height, `Roboflow 第 ${index + 1} 个检测框 height 无效`),
+      class: className,
+      confidence: readFiniteNumber(
+        prediction.confidence,
+        `Roboflow 第 ${index + 1} 个检测框 confidence 无效`
+      )
+    };
+  });
+}
+
+function readFiniteNumber(value: unknown, message: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(message);
+  }
+  return value;
 }
 
 function extractMessageContent(response: unknown): string {
