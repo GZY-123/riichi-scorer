@@ -23,6 +23,7 @@
   <view class="section panel">
     <view class="section-heading">
       <view class="section-title">牌面修正</view>
+      <button class="mini-button" bindtap="onSortTiles">理牌</button>
     </view>
     <view wx:if="{{tiles.length === 0}}" class="empty">暂无牌面，可点选下方牌键录入或先识别图片</view>
     <view class="tile-grid">
@@ -37,7 +38,7 @@
         </view>
       </block>
     </view>
-    <view class="keyboard-status">已录入 {{tiles.length}} 张</view>
+    <view class="keyboard-status">已录入 {{tiles.length}} 张 · 点牌可修改，红框为和牌张</view>
     <tile-keyboard bind:tap="onHandKeyboardTap" bind:delete="onHandKeyboardDelete" />
 
     <view class="sub-section">

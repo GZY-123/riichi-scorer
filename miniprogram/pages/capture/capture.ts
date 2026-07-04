@@ -325,7 +325,7 @@ Page({
     }));
     const melds = this.toMeldViews(result.melds ?? []);
     this.setData({
-      tiles: this.decorateTiles(tiles),
+      tiles: this.decorateTiles(this.sortHandTiles(tiles)),
       melds,
       recognizeState: "识别完成",
       recognizeError: "",
@@ -754,6 +754,22 @@ Page({
       doraItems: doraIndicators.map((tile, index) => ({ key: `${index}_${tile}`, code: tile })),
       scorePreview: null
     });
+  },
+
+  sortHandTiles(tiles: TileCell[]): TileCell[] {
+    const suitOrder: Record<string, number> = { m: 0, p: 1, s: 2, z: 3 };
+    return [...tiles].sort((a, b) => {
+      const sa = suitOrder[a.value[1]] ?? 9;
+      const sb = suitOrder[b.value[1]] ?? 9;
+      if (sa !== sb) return sa - sb;
+      const ra = a.value[0] === "0" ? 5.5 : Number(a.value[0]);
+      const rb = b.value[0] === "0" ? 5.5 : Number(b.value[0]);
+      return ra - rb;
+    });
+  },
+
+  onSortTiles() {
+    this.syncTiles(this.sortHandTiles(this.data.tiles));
   },
 
   decorateTiles(tiles: TileCell[]): TileCell[] {
