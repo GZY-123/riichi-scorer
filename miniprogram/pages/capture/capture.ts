@@ -73,6 +73,8 @@ interface TileCell {
   id: string;
   value: string;
   isWinning: boolean;
+  // 渲染 key 含牌值：值变化时强制重建组件实例，规避真机列表 diff 复用错位
+  renderKey?: string;
 }
 
 interface MeldInput {
@@ -85,6 +87,7 @@ interface MeldView extends MeldInput {
   id: string;
   typeText: string;
   tilesText: string;
+  tileItems: Array<{ key: string; code: string }>;
 }
 
 interface RecognizeResult {
@@ -191,6 +194,7 @@ Page({
     riichi: false,
     ippatsu: false,
     doraIndicators: [] as string[],
+    doraItems: [] as Array<{ key: string; code: string }>,
     nukiDora: "0",
     scoring: false,
     applying: false,
@@ -321,7 +325,7 @@ Page({
     }));
     const melds = this.toMeldViews(result.melds ?? []);
     this.setData({
-      tiles,
+      tiles: this.decorateTiles(tiles),
       melds,
       recognizeState: "识别完成",
       recognizeError: "",
@@ -550,19 +554,16 @@ Page({
     if (!value || !this.ensureValidTile(value, "宝牌指示牌")) {
       return;
     }
-    this.setData({ doraIndicators: [...this.data.doraIndicators, value], scorePreview: null });
+    this.syncDora([...this.data.doraIndicators, value]);
   },
 
   onDoraKeyboardDelete() {
-    this.setData({ doraIndicators: this.data.doraIndicators.slice(0, -1), scorePreview: null });
+    this.syncDora(this.data.doraIndicators.slice(0, -1));
   },
 
   onDoraTileTap(event: TapEvent) {
     const index = this.toIndex(event.currentTarget.dataset.index);
-    this.setData({
-      doraIndicators: this.data.doraIndicators.filter((_, tileIndex) => tileIndex !== index),
-      scorePreview: null
-    });
+    this.syncDora(this.data.doraIndicators.filter((_, tileIndex) => tileIndex !== index));
   },
 
   onNukiDoraInput(event: InputEvent) {
@@ -705,7 +706,7 @@ Page({
 
   syncTiles(tiles: TileCell[]) {
     this.setData({
-      tiles,
+      tiles: this.decorateTiles(tiles),
       scorePreview: null
     });
   },
@@ -737,12 +738,29 @@ Page({
   },
 
   toMeldView(meld: MeldInput): MeldView {
+    const id = this.nextMeldId();
     return {
       ...meld,
-      id: this.nextMeldId(),
+      id,
       typeText: MELD_TYPE_OPTIONS.find((option) => option.value === meld.type)?.text ?? meld.type,
-      tilesText: meld.tiles.join(" ")
+      tilesText: meld.tiles.join(" "),
+      tileItems: meld.tiles.map((tile, index) => ({ key: `${id}_${index}_${tile}`, code: tile }))
     };
+  },
+
+  syncDora(doraIndicators: string[]) {
+    this.setData({
+      doraIndicators,
+      doraItems: doraIndicators.map((tile, index) => ({ key: `${index}_${tile}`, code: tile })),
+      scorePreview: null
+    });
+  },
+
+  decorateTiles(tiles: TileCell[]): TileCell[] {
+    return tiles.map((tile) => ({
+      ...tile,
+      renderKey: `${tile.id}_${tile.value}_${tile.isWinning ? 1 : 0}`
+    }));
   },
 
   toScorePreview(result: ScoreHandResult): ScorePreview {

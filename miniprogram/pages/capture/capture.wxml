@@ -26,7 +26,7 @@
     </view>
     <view wx:if="{{tiles.length === 0}}" class="empty">暂无牌面，可点选下方牌键录入或先识别图片</view>
     <view class="tile-grid">
-      <block wx:for="{{tiles}}" wx:key="id">
+      <block wx:for="{{tiles}}" wx:key="renderKey">
         <view
           class="tile-cell {{item.isWinning ? 'winning' : ''}}"
           data-index="{{index}}"
@@ -50,8 +50,8 @@
         <view class="meld-row" data-index="{{index}}" bindtap="onEditMeld">
           <text class="meld-type">{{item.typeText}}</text>
           <view class="meld-tiles">
-            <block wx:for="{{item.tiles}}" wx:for-item="tile" wx:key="*this">
-              <tile-image code="{{tile}}" size="small" />
+            <block wx:for="{{item.tileItems}}" wx:for-item="tile" wx:key="key">
+              <tile-image code="{{tile.code}}" size="small" />
             </block>
           </view>
         </view>
@@ -96,9 +96,9 @@
       <text class="label">宝牌指示牌</text>
       <view class="selected-tile-strip dora-strip">
         <block wx:if="{{doraIndicators.length > 0}}">
-          <block wx:for="{{doraIndicators}}" wx:key="*this">
+          <block wx:for="{{doraItems}}" wx:key="key">
             <view class="selected-tile" data-index="{{index}}" bindtap="onDoraTileTap">
-              <tile-image code="{{item}}" size="medium" />
+              <tile-image code="{{item.code}}" size="medium" />
             </view>
           </block>
         </block>
