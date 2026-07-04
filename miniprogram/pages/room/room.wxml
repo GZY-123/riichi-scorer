@@ -11,24 +11,38 @@
   </view>
 
   <view class="score-grid section">
-    <block wx:for="{{players}}" wx:key="openid">
-      <view class="player-card {{item.isDealer ? 'dealer' : ''}}">
-        <view class="player-top">
-          <view class="player-identity">
-            <image
-              wx:if="{{item.avatarFileId}}"
-              class="player-avatar"
-              src="{{item.avatarFileId}}"
-              mode="aspectFill"
-            />
-            <view wx:else class="player-avatar avatar-fallback">{{item.avatarText}}</view>
-            <text class="seat">{{item.seatText}}</text>
+    <block wx:if="{{!roomLoaded}}">
+      <block wx:for="{{skeletonCards}}" wx:key="*this">
+        <view class="score-skeleton-card">
+          <view class="skeleton-row">
+            <view class="skeleton-avatar"></view>
+            <view class="skeleton-chip"></view>
           </view>
-          <text wx:if="{{item.isDealer}}" class="dealer-badge">庄</text>
+          <view class="skeleton-line"></view>
+          <view class="skeleton-score"></view>
         </view>
-        <view class="player-name">{{item.nickName}}</view>
-        <view class="score num">{{item.score}}</view>
-      </view>
+      </block>
+    </block>
+    <block wx:else>
+      <block wx:for="{{players}}" wx:key="openid">
+        <view class="player-card {{item.isDealer ? 'dealer' : ''}}">
+          <view class="player-top">
+            <view class="player-identity">
+              <image
+                wx:if="{{item.avatarFileId}}"
+                class="player-avatar"
+                src="{{item.avatarFileId}}"
+                mode="aspectFill"
+              />
+              <view wx:else class="player-avatar avatar-fallback">{{item.avatarText}}</view>
+              <text class="seat">{{item.seatText}}</text>
+            </view>
+            <text wx:if="{{item.isDealer}}" class="dealer-badge">庄</text>
+          </view>
+          <view class="player-name">{{item.nickName}}</view>
+          <view class="score num {{item.scoreFlash}}">{{item.score}}</view>
+        </view>
+      </block>
     </block>
   </view>
 
@@ -62,7 +76,7 @@
 
   <view class="section panel">
     <view class="section-title">事件履历</view>
-    <view wx:if="{{events.length === 0}}" class="empty">暂无事件</view>
+    <view wx:if="{{events.length === 0}}" class="empty event-empty">🀄 第一局开始后，这里会记录每一笔点数变动</view>
     <block wx:for="{{events}}" wx:key="id">
       <view class="event-item">
         <view class="event-main">

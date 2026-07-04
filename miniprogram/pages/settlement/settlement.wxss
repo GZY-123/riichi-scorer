@@ -18,7 +18,7 @@
 }
 
 .status {
-  padding: 8rpx 22rpx;
+  padding: 8rpx 24rpx;
   border-radius: 26rpx;
   background: rgba(15, 83, 66, 0.1);
   color: var(--felt);
@@ -36,9 +36,9 @@
 .rank-row {
   display: grid;
   grid-template-columns: 64rpx 64rpx minmax(0, 1fr) auto;
-  gap: 18rpx;
+  gap: 16rpx;
   align-items: center;
-  min-height: 118rpx;
+  min-height: 120rpx;
   border-top: 1rpx solid var(--line);
 }
 
@@ -60,10 +60,29 @@
   font-weight: 700;
 }
 
-.rank-no.first {
-  border-color: var(--felt);
-  background: var(--felt);
+.rank-row.rank-1 {
+  grid-template-columns: 72rpx 80rpx minmax(0, 1fr) auto;
+  min-height: 144rpx;
+}
+
+.rank-row.rank-1 .rank-no {
+  width: 64rpx;
+  height: 64rpx;
+  border-color: var(--gold);
+  background: var(--gold);
   color: var(--ivory);
+}
+
+.rank-row.rank-2 .rank-no {
+  border-color: var(--silver);
+  background: var(--silver);
+  color: #ffffff;
+}
+
+.rank-row.rank-3 .rank-no {
+  border-color: var(--bronze);
+  background: var(--bronze);
+  color: #ffffff;
 }
 
 .rank-avatar {
@@ -72,6 +91,13 @@
   overflow: hidden;
   border-radius: 50%;
   background: rgba(15, 83, 66, 0.1);
+  box-sizing: border-box;
+}
+
+.rank-row.rank-1 .rank-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border: 4rpx solid var(--gold);
 }
 
 .avatar-fallback {
@@ -93,7 +119,7 @@
 }
 
 .rank-note {
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   color: var(--muted);
   font-size: 23rpx;
 }
@@ -108,8 +134,29 @@
   font-weight: 700;
 }
 
+.rank-row.rank-1 .final-score {
+  font-size: 44rpx;
+  font-weight: 800;
+}
+
+.score-positive {
+  color: var(--felt);
+}
+
+.score-negative {
+  color: var(--red);
+}
+
+.score-neutral {
+  color: var(--muted);
+}
+
 .raw-score {
-  margin-top: 4rpx;
+  margin-top: 8rpx;
   color: var(--muted);
   font-size: 22rpx;
+}
+
+.return-home-button {
+  margin-top: 32rpx;
 }

@@ -1,4 +1,5 @@
 import { avatarFallbackText } from "../../utils/profile";
+import { clearLastRoom, writeLastRoom } from "../../utils/lastRoom";
 
 type GameMode = "3p" | "4p";
 type Seat = "east" | "south" | "west" | "north";
@@ -68,6 +69,7 @@ interface ViewPlayer extends PlayerState {
   seatText: string;
   isDealer: boolean;
   avatarText: string;
+  scoreFlash: "" | "score-up" | "score-down";
 }
 
 interface DeltaInput {
@@ -108,6 +110,7 @@ const EVENT_TEXT: Record<RoomEventType, string> = {
 
 let watcher: { close: () => void } | null = null;
 let reconnectTimer: number | undefined;
+let scoreFlashTimer: number | undefined;
 
 Page({
   data: {
@@ -118,6 +121,8 @@ Page({
     riichiSticks: 0,
     honba: 0,
     players: [] as ViewPlayer[],
+    roomLoaded: false,
+    skeletonCards: [0, 1, 2, 3],
     events: [] as ViewEvent[],
     watchState: "同步连接中",
     eventPanelVisible: false,
@@ -146,6 +151,7 @@ Page({
 
   onUnload() {
     this.stopWatch();
+    this.clearScoreFlashTimer();
   },
 
   async fetchRoom() {
@@ -158,8 +164,11 @@ Page({
 
       if (response.data) {
         this.applyRoom(response.data);
+      } else {
+        this.setData({ roomLoaded: true });
       }
     } catch (error) {
+      this.setData({ roomLoaded: true });
       this.showError(error);
     }
   },
@@ -199,11 +208,23 @@ Page({
   },
 
   applyRoom(room: RoomDocument) {
+    if (room.status === "finished") {
+      clearLastRoom();
+    } else {
+      writeLastRoom({
+        roomId: this.data.roomId,
+        roomCode: room.roomCode,
+        mode: room.mode
+      });
+    }
+
+    const previousScores = new Map(this.data.players.map((player) => [player.openid, player.score]));
     const players = room.players.map((player) => ({
       ...player,
       seatText: SEAT_TEXT[player.seat],
       isDealer: player.seat === room.round.dealerSeat,
-      avatarText: avatarFallbackText(player.nickName)
+      avatarText: avatarFallbackText(player.nickName),
+      scoreFlash: this.scoreFlashClass(previousScores.get(player.openid), player.score)
     }));
 
     const events = [...room.events]
@@ -217,8 +238,36 @@ Page({
       riichiSticks: room.round.riichiSticks,
       honba: room.round.honba,
       players,
-      events
+      events,
+      roomLoaded: true
     });
+
+    if (players.some((player) => player.scoreFlash)) {
+      this.clearScoreFlashTimer();
+      scoreFlashTimer = setTimeout(() => {
+        this.setData({
+          players: this.data.players.map((player) => ({
+            ...player,
+            scoreFlash: ""
+          }))
+        });
+        scoreFlashTimer = undefined;
+      }, 300);
+    }
+  },
+
+  scoreFlashClass(previous: number | undefined, next: number): "" | "score-up" | "score-down" {
+    if (previous === undefined || previous === next) {
+      return "";
+    }
+    return next > previous ? "score-up" : "score-down";
+  },
+
+  clearScoreFlashTimer() {
+    if (scoreFlashTimer !== undefined) {
+      clearTimeout(scoreFlashTimer);
+      scoreFlashTimer = undefined;
+    }
   },
 
   toViewEvent(event: RoomEventLog, players: PlayerState[]): ViewEvent {

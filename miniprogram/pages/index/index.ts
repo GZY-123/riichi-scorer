@@ -4,6 +4,7 @@ import {
   UserProfile,
   writeCachedUserProfile
 } from "../../utils/profile";
+import { LastRoomRecord, readLastRoom, writeLastRoom } from "../../utils/lastRoom";
 
 type GameMode = "3p" | "4p";
 
@@ -28,6 +29,7 @@ interface ModeChangeEvent {
 interface RoomFunctionResult {
   roomId: string;
   roomCode: string;
+  mode?: GameMode;
   playerOpenid: string;
   restored?: boolean;
 }
@@ -51,6 +53,7 @@ Page({
     uploadingAvatar: false,
     mode: "4p" as GameMode,
     roomCode: "",
+    lastRoom: null as LastRoomRecord | null,
     creating: false,
     joining: false
   },
@@ -67,6 +70,10 @@ Page({
     }
 
     this.loadRemoteProfile();
+  },
+
+  onShow() {
+    this.refreshLastRoom();
   },
 
   async loadRemoteProfile() {
@@ -142,6 +149,17 @@ Page({
 
   onModeChange(event: ModeChangeEvent) {
     this.setData({ mode: event.detail.value });
+  },
+
+  onContinueRoom() {
+    const room = this.data.lastRoom;
+    if (!room) {
+      return;
+    }
+
+    wx.navigateTo({
+      url: `/pages/room/room?roomId=${room.roomId}`
+    });
   },
 
   async onCreateRoom() {
@@ -393,9 +411,29 @@ Page({
     app.globalData.nickName = profile.nickName;
     app.globalData.avatarFileId = profile.avatarFileId ?? "";
 
+    writeLastRoom({
+      roomId: result.roomId,
+      roomCode: result.roomCode || result.roomId,
+      mode: result.mode ?? this.data.mode
+    });
+    this.refreshLastRoom();
+    this.vibrateLight();
+
     wx.navigateTo({
       url: `/pages/room/room?roomId=${result.roomId}`
     });
+  },
+
+  refreshLastRoom() {
+    this.setData({ lastRoom: readLastRoom() });
+  },
+
+  vibrateLight() {
+    try {
+      wx.vibrateShort({ type: "light" });
+    } catch (_error) {
+      // 真机支持时才会生效。
+    }
   },
 
   showError(error: unknown) {

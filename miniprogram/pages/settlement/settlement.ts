@@ -1,5 +1,7 @@
 import { avatarFallbackText } from "../../utils/profile";
+import { clearLastRoom } from "../../utils/lastRoom";
 
+type GameMode = "3p" | "4p";
 type Seat = "east" | "south" | "west" | "north";
 type RoomStatus = "waiting" | "playing" | "finished";
 
@@ -13,6 +15,7 @@ interface PlayerState {
 
 interface RoomDocument {
   roomCode: string;
+  mode: GameMode;
   status: RoomStatus;
   players: PlayerState[];
 }
@@ -26,6 +29,9 @@ interface Ranking {
   seatText: string;
   rawScore: number;
   finalScore: number;
+  finalScoreText: string;
+  scoreClass: "score-positive" | "score-negative" | "score-neutral";
+  rankClass: "rank-1" | "rank-2" | "rank-3" | "";
 }
 
 const SEAT_TEXT: Record<Seat, string> = {
@@ -74,18 +80,25 @@ Page({
         return;
       }
 
+      const baseScore = response.data.mode === "3p" ? 35000 : 25000;
       const rankings = [...response.data.players]
         .sort((left, right) => right.score - left.score)
-        .map((player, index) => ({
-          openid: player.openid,
-          rank: index + 1,
-          nickName: player.nickName,
-          avatarFileId: player.avatarFileId,
-          avatarText: avatarFallbackText(player.nickName),
-          seatText: SEAT_TEXT[player.seat],
-          rawScore: player.score,
-          finalScore: player.score
-        }));
+        .map((player, index) => {
+          const finalScore = player.score - baseScore;
+          return {
+            openid: player.openid,
+            rank: index + 1,
+            nickName: player.nickName,
+            avatarFileId: player.avatarFileId,
+            avatarText: avatarFallbackText(player.nickName),
+            seatText: SEAT_TEXT[player.seat],
+            rawScore: player.score,
+            finalScore,
+            finalScoreText: `${finalScore > 0 ? "+" : ""}${finalScore}`,
+            scoreClass: this.scoreClass(finalScore),
+            rankClass: this.rankClass(index + 1)
+          };
+        });
 
       this.setData({
         roomCode: response.data.roomCode,
@@ -96,6 +109,26 @@ Page({
       const message = error instanceof Error ? error.message : "读取结算失败";
       wx.showToast({ title: message, icon: "none" });
     }
+  },
+
+  onReturnHomeTap() {
+    clearLastRoom();
+    wx.reLaunch({
+      url: "/pages/index/index"
+    });
+  },
+
+  scoreClass(score: number): "score-positive" | "score-negative" | "score-neutral" {
+    if (score > 0) return "score-positive";
+    if (score < 0) return "score-negative";
+    return "score-neutral";
+  },
+
+  rankClass(rank: number): "rank-1" | "rank-2" | "rank-3" | "" {
+    if (rank === 1) return "rank-1";
+    if (rank === 2) return "rank-2";
+    if (rank === 3) return "rank-3";
+    return "";
   }
 });
 

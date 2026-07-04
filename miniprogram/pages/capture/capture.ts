@@ -1,4 +1,5 @@
 import { detectTilesOnDevice } from "../../utils/localDetector";
+import { avatarFallbackText } from "../../utils/profile";
 
 type GameMode = "3p" | "4p";
 type Seat = "east" | "south" | "west" | "north";
@@ -45,6 +46,7 @@ interface TileKeyboardEvent {
 interface PlayerState {
   openid: string;
   nickName: string;
+  avatarFileId?: string;
   seat: Seat;
   score: number;
 }
@@ -67,6 +69,7 @@ interface RoomDocument {
 interface ViewPlayer extends PlayerState {
   seatText: string;
   label: string;
+  avatarText: string;
 }
 
 interface TileCell {
@@ -133,7 +136,25 @@ interface DeltaRow {
   openid: string;
   label: string;
   valueText: string;
-  positive: boolean;
+  valueClass: "delta-positive" | "delta-negative" | "delta-neutral";
+}
+
+interface YakuRow {
+  id: string;
+  name: string;
+  valueText: string;
+}
+
+interface WinSettlementCard {
+  winnerNickName: string;
+  winnerAvatarFileId?: string;
+  winnerAvatarText: string;
+  scoreText: string;
+  detailText: string;
+  paymentText: string;
+  limitLabel: string;
+  yakuRows: YakuRow[];
+  deltaRows: DeltaRow[];
 }
 
 interface ScorePreview {
@@ -142,6 +163,7 @@ interface ScorePreview {
   paymentText: string;
   deltaRows: DeltaRow[];
   applyEvent: ScoreHandResult["applyEvent"];
+  settlementCard: WinSettlementCard;
 }
 
 const SEAT_TEXT: Record<Seat, string> = {
@@ -201,6 +223,8 @@ Page({
     scoring: false,
     applying: false,
     scorePreview: null as ScorePreview | null,
+    settlementCardVisible: false,
+    settlementCard: null as WinSettlementCard | null,
     handSequence: ""
   },
 
@@ -237,7 +261,8 @@ Page({
     const players = room.players.map((player) => ({
       ...player,
       seatText: SEAT_TEXT[player.seat],
-      label: `${SEAT_TEXT[player.seat]} ${player.nickName}`
+      label: `${SEAT_TEXT[player.seat]} ${player.nickName}`,
+      avatarText: avatarFallbackText(player.nickName)
     }));
     const winnerIndex = Math.min(this.data.winnerIndex, Math.max(players.length - 1, 0));
     const loserIndex = this.resolveLoserIndex(players, winnerIndex, this.data.loserIndex);
@@ -345,12 +370,14 @@ Page({
     if (!value || !this.ensureValidTile(value, "牌")) {
       return;
     }
+    this.vibrateLight();
     const tiles = this.data.tiles.map((tile) => ({ ...tile, isWinning: false }));
     tiles.push({ id: this.nextTileId(), value, isWinning: true });
     this.syncTiles(tiles);
   },
 
   onHandKeyboardDelete() {
+    this.vibrateLight();
     const tiles = this.withWinningTile(this.data.tiles.slice(0, -1));
     this.syncTiles(tiles);
   },
@@ -374,10 +401,12 @@ Page({
     if (!value || !this.ensureValidTile(value, "牌")) {
       return;
     }
+    this.vibrateLight();
     this.setData({ tileEditorValue: value });
   },
 
   onTileEditorKeyboardDelete() {
+    this.vibrateLight();
     this.setData({ tileEditorValue: "" });
   },
 
@@ -481,10 +510,12 @@ Page({
     if (!value || !this.ensureValidTile(value, "副露牌")) {
       return;
     }
+    this.vibrateLight();
     this.setData({ meldEditorTiles: [...this.data.meldEditorTiles, value] });
   },
 
   onMeldKeyboardDelete() {
+    this.vibrateLight();
     this.setData({ meldEditorTiles: this.data.meldEditorTiles.slice(0, -1) });
   },
 
@@ -559,10 +590,12 @@ Page({
     if (!value || !this.ensureValidTile(value, "宝牌指示牌")) {
       return;
     }
+    this.vibrateLight();
     this.syncDora([...this.data.doraIndicators, value]);
   },
 
   onDoraKeyboardDelete() {
+    this.vibrateLight();
     this.syncDora(this.data.doraIndicators.slice(0, -1));
   },
 
@@ -649,12 +682,21 @@ Page({
           ...preview.applyEvent
         }
       });
-      wx.navigateBack();
+      this.vibrateLight();
+      this.setData({
+        settlementCardVisible: true,
+        settlementCard: preview.settlementCard
+      });
     } catch (error) {
       this.showError(error, "落账失败");
     } finally {
       this.setData({ applying: false });
     }
+  },
+
+  onReturnRoomTap() {
+    this.setData({ settlementCardVisible: false });
+    wx.navigateBack();
   },
 
   chooseImage(): Promise<string> {
@@ -806,21 +848,77 @@ Page({
         : result.score.tsumo?.all !== undefined
           ? `自摸 每家 ${result.score.tsumo.all} 点`
           : `自摸 庄家 ${result.score.tsumo?.dealer ?? 0} 点 / 闲家 ${result.score.tsumo?.nonDealer ?? 0} 点`;
+    const deltaRows = this.data.players.map((player) => {
+      const delta = result.deltas[player.openid] ?? 0;
+      return {
+        openid: player.openid,
+        label: player.label,
+        valueText: `${delta > 0 ? "+" : ""}${delta}`,
+        valueClass: this.deltaValueClass(delta)
+      };
+    });
+
     return {
       yakuText,
       valueText,
       paymentText,
-      deltaRows: this.data.players.map((player) => {
-        const delta = result.deltas[player.openid] ?? 0;
-        return {
-          openid: player.openid,
-          label: player.label,
-          valueText: `${delta > 0 ? "+" : ""}${delta}`,
-          positive: delta > 0
-        };
-      }),
-      applyEvent: result.applyEvent
+      deltaRows,
+      applyEvent: result.applyEvent,
+      settlementCard: this.toSettlementCard(result, deltaRows, paymentText)
     };
+  },
+
+  toSettlementCard(result: ScoreHandResult, deltaRows: DeltaRow[], paymentText: string): WinSettlementCard {
+    const winner = this.data.players[this.data.winnerIndex];
+    const limitLabel = this.limitLabel(result);
+    const detailText =
+      result.yakuman > 0
+        ? `${limitLabel} · ${result.yakuman}倍役满`
+        : `${limitLabel ? `${limitLabel} · ` : ""}${result.han}番${result.fu}符`;
+
+    return {
+      winnerNickName: winner?.nickName ?? "和牌者",
+      winnerAvatarFileId: winner?.avatarFileId,
+      winnerAvatarText: winner?.avatarText ?? "麻",
+      scoreText: `${result.score.total}`,
+      detailText,
+      paymentText,
+      limitLabel,
+      yakuRows: this.toYakuRows(result),
+      deltaRows
+    };
+  },
+
+  toYakuRows(result: ScoreHandResult): YakuRow[] {
+    if (result.yaku.length === 0) {
+      return [{ id: "empty", name: "无", valueText: "-" }];
+    }
+
+    return result.yaku.map((item, index) => ({
+      id: `${index}_${item.name}`,
+      name: item.name,
+      valueText: item.yakuman ? `${item.yakuman}倍役满` : item.han ? `${item.han}番` : "-"
+    }));
+  },
+
+  limitLabel(result: ScoreHandResult): string {
+    if (result.yakuman > 0) {
+      return result.yakuman > 1 ? `${result.yakuman}倍役满` : "役满";
+    }
+    if (result.han >= 13) return "役满";
+    if (result.han >= 11) return "三倍满";
+    if (result.han >= 8) return "倍满";
+    if (result.han >= 6) return "跳满";
+    if (result.han >= 5 || (result.han === 4 && result.fu >= 40) || (result.han === 3 && result.fu >= 70)) {
+      return "满贯";
+    }
+    return "";
+  },
+
+  deltaValueClass(delta: number): "delta-positive" | "delta-negative" | "delta-neutral" {
+    if (delta > 0) return "delta-positive";
+    if (delta < 0) return "delta-negative";
+    return "delta-neutral";
   },
 
   resolveLoserIndex(players: ViewPlayer[], winnerIndex: number, currentLoserIndex: number): number {
@@ -867,6 +965,14 @@ Page({
   showError(error: unknown, fallback: string) {
     const message = this.errorMessage(error) || fallback;
     wx.showToast({ title: message, icon: "none" });
+  },
+
+  vibrateLight() {
+    try {
+      wx.vibrateShort({ type: "light" });
+    } catch (_error) {
+      // 真机支持时才会生效。
+    }
   },
 
   errorMessage(error: unknown): string {

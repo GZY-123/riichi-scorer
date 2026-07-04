@@ -11,8 +11,8 @@
     <view class="section-title">顺位</view>
     <view wx:if="{{rankings.length === 0}}" class="empty">暂无玩家数据</view>
     <block wx:for="{{rankings}}" wx:key="openid">
-      <view class="rank-row">
-        <view class="rank-no {{item.rank === 1 ? 'first' : ''}}">{{item.rank}}</view>
+      <view class="rank-row {{item.rankClass}}">
+        <view class="rank-no">{{item.rank}}</view>
         <image
           wx:if="{{item.avatarFileId}}"
           class="rank-avatar"
@@ -25,10 +25,12 @@
           <view class="rank-note">{{item.seatText}}起家</view>
         </view>
         <view class="rank-score">
-          <view class="final-score num">{{item.finalScore}}</view>
+          <view class="final-score num {{item.scoreClass}}">{{item.finalScoreText}}</view>
           <view class="raw-score num">素点 {{item.rawScore}}</view>
         </view>
       </view>
     </block>
   </view>
+
+  <button class="primary-button return-home-button" bindtap="onReturnHomeTap">返回首页</button>
 </view>

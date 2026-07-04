@@ -73,6 +73,17 @@
     </view>
   </view>
 
+  <view wx:if="{{lastRoom}}" class="section panel rejoin-panel">
+    <view class="rejoin-copy">
+      <view class="label">进行中的对局</view>
+      <view class="rejoin-room num">{{lastRoom.roomCode}}</view>
+    </view>
+    <view class="rejoin-side">
+      <view class="rejoin-mode">{{lastRoom.mode === "3p" ? "三麻" : "四麻"}}</view>
+      <button class="primary-button rejoin-button" bindtap="onContinueRoom">继续对局</button>
+    </view>
+  </view>
+
   <view class="section panel">
     <view class="label">创建房间</view>
     <radio-group class="mode-group" bindchange="onModeChange">

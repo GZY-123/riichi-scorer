@@ -9,6 +9,9 @@ page {
   --ink: #1f2b27;
   --red: #b93a28;
   --amber: #b8862c;
+  --gold: #d4a017;
+  --silver: #aeb4b9;
+  --bronze: #b97942;
   --muted: #6e7b76;
   --line: #e9e4d3;
   --bg: #f1eee3;
@@ -34,13 +37,13 @@ page {
   background: #ffffff;
   border: 1rpx solid var(--line);
   border-radius: 20rpx;
-  padding: 30rpx;
+  padding: 32rpx;
   box-shadow: 0 2rpx 10rpx rgba(31, 43, 39, 0.04);
 }
 
 .label {
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: 8rpx;
   color: var(--muted);
   font-size: 26rpx;
 }
@@ -59,7 +62,7 @@ page {
 
 .button-row {
   display: flex;
-  gap: 18rpx;
+  gap: 16rpx;
   align-items: center;
 }
 
@@ -132,7 +135,7 @@ button::after {
   min-width: 0;
   min-height: 60rpx;
   margin: 0 !important;
-  padding: 0 28rpx;
+  padding: 0 32rpx;
   border-radius: 30rpx;
   border: 2rpx solid var(--felt);
   background: #ffffff;
@@ -152,7 +155,7 @@ button::after {
 }
 
 .empty {
-  padding: 36rpx 0;
+  padding: 32rpx 0;
   color: var(--muted);
   text-align: center;
   font-size: 27rpx;

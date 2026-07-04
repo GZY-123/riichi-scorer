@@ -123,10 +123,46 @@
     <block wx:for="{{scorePreview.deltaRows}}" wx:key="openid">
       <view class="delta-row">
         <text>{{item.label}}</text>
-        <text class="{{item.positive ? 'delta-positive' : 'delta-negative'}}">{{item.valueText}}</text>
+        <text class="{{item.valueClass}}">{{item.valueText}}</text>
       </view>
     </block>
     <button class="primary-button full-button" loading="{{applying}}" bindtap="onConfirmApply">确认落账</button>
+  </view>
+
+  <view wx:if="{{settlementCardVisible && settlementCard}}" class="celebration-mask">
+    <view class="win-card {{settlementCard.limitLabel ? 'limit-win' : ''}}">
+      <view wx:if="{{settlementCard.limitLabel}}" class="limit-badge">{{settlementCard.limitLabel}}</view>
+      <view class="winner-block">
+        <image
+          wx:if="{{settlementCard.winnerAvatarFileId}}"
+          class="winner-avatar"
+          src="{{settlementCard.winnerAvatarFileId}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="winner-avatar avatar-fallback">{{settlementCard.winnerAvatarText}}</view>
+        <view class="winner-name">{{settlementCard.winnerNickName}}</view>
+      </view>
+      <view class="win-score num">{{settlementCard.scoreText}}</view>
+      <view class="win-detail">{{settlementCard.detailText}}</view>
+      <view class="win-payment">{{settlementCard.paymentText}}</view>
+      <view class="celebration-section">
+        <block wx:for="{{settlementCard.yakuRows}}" wx:key="id">
+          <view class="yaku-row">
+            <text>{{item.name}}</text>
+            <text class="yaku-value">{{item.valueText}}</text>
+          </view>
+        </block>
+      </view>
+      <view class="celebration-section">
+        <block wx:for="{{settlementCard.deltaRows}}" wx:key="openid">
+          <view class="delta-row celebration-delta-row">
+            <text>{{item.label}}</text>
+            <text class="{{item.valueClass}}">{{item.valueText}}</text>
+          </view>
+        </block>
+      </view>
+      <button class="primary-button return-room-button" bindtap="onReturnRoomTap">返回房间</button>
+    </view>
   </view>
 
   <view wx:if="{{tileEditorVisible}}" class="modal-mask">

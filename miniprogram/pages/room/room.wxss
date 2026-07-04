@@ -11,8 +11,8 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 30rpx;
-  padding: 8rpx 4rpx 0;
+  margin-bottom: 32rpx;
+  padding: 8rpx 0 0;
 }
 
 .room-label {
@@ -22,7 +22,7 @@ page {
 }
 
 .room-code {
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   color: var(--ivory);
   font-size: 56rpx;
   font-weight: 700;
@@ -34,11 +34,11 @@ page {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
 .round-chip {
-  padding: 8rpx 22rpx;
+  padding: 8rpx 24rpx;
   border-radius: 28rpx;
   background: rgba(251, 248, 239, 0.14);
   border: 1rpx solid rgba(251, 248, 239, 0.22);
@@ -66,13 +66,13 @@ page {
 .score-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18rpx;
+  gap: 16rpx;
 }
 
 .player-card {
   min-height: 180rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 18rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
   background: linear-gradient(180deg, #fdfbf4 0%, #f3edda 100%);
   box-shadow:
     inset 0 2rpx 0 rgba(255, 255, 255, 0.9),
@@ -91,13 +91,13 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
 .player-identity {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
   min-width: 0;
 }
 
@@ -160,7 +160,7 @@ page {
 }
 
 .player-name {
-  margin-top: 18rpx;
+  margin-top: 16rpx;
   color: var(--muted);
   font-size: 26rpx;
   overflow: hidden;
@@ -169,11 +169,66 @@ page {
 }
 
 .score {
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   color: var(--ink);
   font-size: 48rpx;
   font-weight: 700;
   line-height: 1.15;
+  transition: color 300ms ease;
+}
+
+.score.score-up {
+  color: var(--felt-bright);
+}
+
+.score.score-down {
+  color: var(--red);
+}
+
+.score-skeleton-card {
+  min-height: 180rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background: rgba(251, 248, 239, 0.82);
+  box-shadow: 0 6rpx 14rpx rgba(6, 32, 25, 0.2);
+  box-sizing: border-box;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.skeleton-avatar,
+.skeleton-chip,
+.skeleton-line,
+.skeleton-score {
+  border-radius: 8rpx;
+  background: rgba(110, 123, 118, 0.18);
+}
+
+.skeleton-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+}
+
+.skeleton-chip {
+  width: 48rpx;
+  height: 40rpx;
+}
+
+.skeleton-line {
+  width: 58%;
+  height: 24rpx;
+  margin-top: 24rpx;
+}
+
+.skeleton-score {
+  width: 72%;
+  height: 48rpx;
+  margin-top: 16rpx;
 }
 
 /* 供托与状态：毡面上的暗色槽 */
@@ -181,8 +236,8 @@ page {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16rpx;
-  padding: 24rpx 28rpx;
-  border-radius: 18rpx;
+  padding: 24rpx 32rpx;
+  border-radius: 16rpx;
   background: rgba(6, 32, 25, 0.35);
   border: 1rpx solid rgba(251, 248, 239, 0.12);
 }
@@ -225,7 +280,7 @@ page {
 .action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18rpx;
+  gap: 16rpx;
 }
 
 .felt-main,
@@ -298,7 +353,7 @@ page {
 }
 
 .event-item {
-  padding: 22rpx 0;
+  padding: 24rpx 0;
   border-top: 1rpx solid rgba(31, 43, 39, 0.08);
 }
 
@@ -308,13 +363,13 @@ page {
 
 .event-main {
   display: flex;
-  gap: 14rpx;
+  gap: 16rpx;
   align-items: center;
 }
 
 .event-type {
   flex: 0 0 auto;
-  padding: 4rpx 16rpx;
+  padding: 8rpx 16rpx;
   border-radius: 8rpx;
   background: rgba(15, 83, 66, 0.1);
   color: var(--felt);
@@ -360,9 +415,13 @@ page {
 }
 
 .event-deltas {
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   color: var(--muted);
   font-size: 25rpx;
+}
+
+.event-empty {
+  line-height: 1.6;
 }
 
 /* 记分弹层 */
@@ -386,7 +445,7 @@ page {
 }
 
 .panel-title {
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
   color: var(--ink);
   font-size: 34rpx;
   font-weight: 700;
@@ -397,7 +456,7 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20rpx;
+  gap: 24rpx;
   min-height: 92rpx;
   border-top: 1rpx solid #f0ede1;
 }
@@ -418,7 +477,7 @@ page {
 .small-input {
   width: 190rpx;
   min-height: 76rpx;
-  padding: 0 18rpx;
+  padding: 0 16rpx;
   border: 1rpx solid var(--ivory-edge);
   border-radius: 12rpx;
   background: #fdfcf8;
@@ -431,8 +490,8 @@ page {
   width: 100%;
   height: 110rpx;
   min-height: 0;
-  margin-top: 20rpx;
-  padding: 18rpx;
+  margin-top: 24rpx;
+  padding: 16rpx;
   border: 1rpx solid var(--ivory-edge);
   border-radius: 12rpx;
   background: #fdfcf8;
