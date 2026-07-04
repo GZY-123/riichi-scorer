@@ -1,0 +1,51 @@
+<view class="page history-page">
+  <view class="history-header">
+    <view>
+      <view class="history-title">对局记录</view>
+      <view class="history-subtitle">最近 30 场房间</view>
+    </view>
+    <view class="header-chip">牌谱</view>
+  </view>
+
+  <view wx:if="{{loading && !loaded}}" class="section panel loading-panel">读取中...</view>
+
+  <view wx:elif="{{loaded && rooms.length === 0}}" class="section panel empty-panel">
+    <view class="empty-title">还没有对局，去创建一个房间吧</view>
+    <button class="secondary-button empty-button" bindtap="onHomeTap">去首页</button>
+  </view>
+
+  <block wx:else>
+    <block wx:for="{{rooms}}" wx:key="roomId">
+      <view
+        class="section panel room-card"
+        data-room-id="{{item.roomId}}"
+        data-status="{{item.status}}"
+        bindtap="onRoomTap"
+      >
+        <view class="card-left">
+          <view class="date-text">{{item.dateText}}</view>
+          <view class="mode-badge">{{item.modeText}}</view>
+        </view>
+
+        <view class="card-main">
+          <view class="card-top">
+            <text class="room-code num">{{item.roomCode}}</text>
+            <text wx:if="{{item.isActive}}" class="status-badge">进行中</text>
+            <text class="event-count">{{item.eventCountText}}</text>
+          </view>
+
+          <view class="players-grid">
+            <block wx:for="{{item.players}}" wx:for-item="player" wx:key="seat">
+              <view class="player-line {{player.isMe ? 'me' : ''}}">
+                <text class="player-name">{{player.seatText}} {{player.nickName}}</text>
+                <text class="player-score num">{{player.score}}</text>
+              </view>
+            </block>
+          </view>
+        </view>
+
+        <view class="rank-badge {{item.rankClass}}">{{item.rankText}}</view>
+      </view>
+    </block>
+  </block>
+</view>

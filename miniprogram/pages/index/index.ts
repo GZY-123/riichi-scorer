@@ -128,6 +128,12 @@ Page({
     this.setData({ editingProfile: true });
   },
 
+  onHistoryTap() {
+    wx.navigateTo({
+      url: "/pages/history/history"
+    });
+  },
+
   onCancelProfileEdit() {
     if (this.data.profileSaved) {
       this.setData({ editingProfile: false });

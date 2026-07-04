@@ -42,6 +42,13 @@
   font-size: 24rpx;
 }
 
+.profile-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12rpx;
+  align-items: center;
+}
+
 .profile-summary,
 .profile-editor {
   display: flex;

@@ -32,5 +32,8 @@
     </block>
   </view>
 
-  <button class="primary-button return-home-button" bindtap="onReturnHomeTap">返回首页</button>
+  <view class="button-row settlement-actions">
+    <button class="secondary-button" bindtap="onHistoryDetailTap">查看牌谱</button>
+    <button class="primary-button" bindtap="onReturnHomeTap">返回首页</button>
+  </view>
 </view>

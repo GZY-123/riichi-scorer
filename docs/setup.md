@@ -49,6 +49,7 @@ cd cloudfunctions/createRoom && npm install --package-lock=false
 cd ../joinRoom && npm install --package-lock=false
 cd ../userProfile && npm install --package-lock=false
 cd ../applyEvent && npm install --package-lock=false
+cd ../listMyRooms && npm install --package-lock=false
 ```
 
 ## 5. 部署云函数
@@ -66,10 +67,17 @@ npm run build   # = build:engine:cloud + build:functions
 2. `joinRoom`
 3. `userProfile`
 4. `applyEvent`
-5. `scoreHand`
-6. `recognizeTiles`（部署后在云开发控制台为其配置环境变量 `DASHSCOPE_API_KEY`，见 `docs/recognition.md`）
+5. `listMyRooms`
+6. `scoreHand`
+7. `recognizeTiles`（部署后在云开发控制台为其配置环境变量 `DASHSCOPE_API_KEY`，见 `docs/recognition.md`）
 
 部署完成后，在云开发控制台确认云函数都处于可调用状态。修改任何云函数 TS 源码后需重新 `npm run build:functions` 再上传。
+
+本版本新增对局记录与历史牌谱：
+
+- `listMyRooms` 必须上传部署，否则首页「对局记录」无法读取历史房间。
+- `applyEvent` 增加和牌牌谱 `detail` 透传，升级后也需要重新上传部署。
+- 历史列表会按 `rooms.updatedAt` 倒序读取最近 30 场；数据量增大后，可在云数据库为 `rooms.updatedAt` 建降序索引作为可选优化。
 
 ## 6. 本地预览流程
 

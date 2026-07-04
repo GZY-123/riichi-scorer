@@ -1,0 +1,81 @@
+<view class="page history-detail-page">
+  <view class="panel summary-panel">
+    <view>
+      <view class="room-code num">{{roomCode || "------"}}</view>
+      <view class="summary-meta">{{modeText}} · {{dateText}}</view>
+    </view>
+    <view class="status-chip">{{statusText}}</view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">终局分数</view>
+    <block wx:for="{{players}}" wx:key="openid">
+      <view class="score-row">
+        <view class="player-identity">
+          <image wx:if="{{item.avatarFileId}}" class="player-avatar" src="{{item.avatarFileId}}" mode="aspectFill" />
+          <view wx:else class="player-avatar avatar-fallback">{{item.avatarText}}</view>
+          <view class="player-main">
+            <view class="player-name">{{item.nickName}}</view>
+            <view class="player-seat">{{item.seatText}}起家</view>
+          </view>
+        </view>
+        <view class="player-score num">{{item.score}}</view>
+      </view>
+    </block>
+  </view>
+
+  <view class="section panel">
+    <view class="section-title">事件时间线</view>
+    <view wx:if="{{loaded && events.length === 0}}" class="empty">暂无事件记录</view>
+    <block wx:for="{{events}}" wx:key="id">
+      <view class="timeline-item">
+        <view class="timeline-dot"></view>
+        <view class="timeline-main">
+          <view class="event-head">
+            <text class="round-chip">{{item.roundText}}</text>
+            <text class="event-type t-{{item.type}}">{{item.typeText}}</text>
+            <text class="event-time">{{item.createdText}}</text>
+          </view>
+          <view class="event-actor">{{item.actorNickName}}</view>
+          <view class="event-deltas">{{item.deltaText}}</view>
+          <view wx:if="{{item.noteText}}" class="event-note">{{item.noteText}}</view>
+
+          <view wx:if="{{item.detailView}}" class="hand-record">
+            <view wx:if="{{item.detailView.tiles.length > 0}}" class="tile-strip">
+              <block wx:for="{{item.detailView.tiles}}" wx:for-item="tile" wx:key="key">
+                <view class="record-tile {{tile.isWinning ? 'winning' : ''}}">
+                  <tile-image code="{{tile.code}}" size="small" />
+                  <text wx:if="{{tile.isWinning}}" class="winning-mark">和</text>
+                </view>
+              </block>
+            </view>
+
+            <view wx:if="{{item.detailView.melds.length > 0}}" class="meld-list">
+              <block wx:for="{{item.detailView.melds}}" wx:for-item="meld" wx:key="id">
+                <view class="meld-row">
+                  <text class="meld-type">{{meld.typeText}}</text>
+                  <view class="meld-tiles">
+                    <block wx:for="{{meld.tiles}}" wx:for-item="tile" wx:key="key">
+                      <tile-image code="{{tile.code}}" size="small" />
+                    </block>
+                  </view>
+                </view>
+              </block>
+            </view>
+
+            <view wx:if="{{item.detailView.yakuRows.length > 0}}" class="yaku-list">
+              <block wx:for="{{item.detailView.yakuRows}}" wx:for-item="yaku" wx:key="id">
+                <view class="yaku-row">
+                  <text>{{yaku.name}}</text>
+                  <text class="yaku-value">{{yaku.valueText}}</text>
+                </view>
+              </block>
+            </view>
+
+            <view wx:if="{{item.detailView.scoreText}}" class="score-text">{{item.detailView.scoreText}}</view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

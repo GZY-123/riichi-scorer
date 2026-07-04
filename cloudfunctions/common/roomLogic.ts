@@ -30,6 +30,28 @@ export interface RoundState {
   dealerSeat: Seat;
 }
 
+export interface RoomEventMeldDetail {
+  type: string;
+  tiles: string[];
+}
+
+export interface RoomEventYakuDetail {
+  name: string;
+  han?: number;
+  yakuman?: number;
+}
+
+export interface RoomEventDetail {
+  tiles?: string[];
+  melds?: RoomEventMeldDetail[];
+  winningTile?: string;
+  yaku?: RoomEventYakuDetail[];
+  han?: number;
+  fu?: number;
+  yakuman?: number;
+  scoreText?: string;
+}
+
 export interface RoomEvent {
   id: string;
   type: RoomEventType;
@@ -46,6 +68,7 @@ export interface RoomEvent {
   statusBefore: RoomStatus;
   statusAfter: RoomStatus;
   undoneEventId?: string;
+  detail?: RoomEventDetail;
 }
 
 export interface RoomDocument {
@@ -60,6 +83,26 @@ export interface RoomDocument {
   updatedAt: number;
 }
 
+export interface MyRoomSummaryPlayer {
+  nickName: string;
+  avatarFileId?: string;
+  seat: Seat;
+  score: number;
+  isMe: boolean;
+}
+
+export interface MyRoomSummary {
+  roomId: string;
+  roomCode: string;
+  mode: GameMode;
+  status: RoomStatus;
+  updatedAt: number;
+  dateLabel: string;
+  players: MyRoomSummaryPlayer[];
+  myRank: number;
+  eventCount: number;
+}
+
 export interface EventInput {
   id?: string;
   type: Exclude<RoomEventType, "undo">;
@@ -69,6 +112,7 @@ export interface EventInput {
   honbaDelta?: number;
   advanceRound?: boolean;
   note?: string;
+  detail?: RoomEventDetail;
 }
 
 export interface JoinResult {
@@ -87,6 +131,9 @@ const INITIAL_SCORE_BY_MODE: Record<GameMode, number> = {
 };
 
 const WIND_ORDER: readonly PrevalentWind[] = ["east", "south", "west", "north"];
+const DETAIL_JSON_LIMIT = 4096;
+const DETAIL_TILES_LIMIT = 20;
+const DETAIL_YAKU_LIMIT = 20;
 
 export function initialScore(mode: GameMode): number {
   return INITIAL_SCORE_BY_MODE[mode];
@@ -273,6 +320,7 @@ export function applyRoomEvent(room: RoomDocument, input: EventInput, now: numbe
   }
 
   const statusAfter: RoomStatus = input.type === "finish" ? "finished" : room.status;
+  const detail = normalizeRoomEventDetail(input.detail);
   const event: RoomEvent = {
     id: input.id ?? createEventId(now, room.events.length),
     type: input.type,
@@ -287,7 +335,8 @@ export function applyRoomEvent(room: RoomDocument, input: EventInput, now: numbe
     roundBefore: cloneRound(room.round),
     playersBefore: clonePlayers(room.players),
     statusBefore: room.status,
-    statusAfter
+    statusAfter,
+    ...(detail ? { detail } : {})
   };
 
   return {
@@ -367,6 +416,100 @@ export function validateDeltas(
   if (playerDeltaTotal + riichiStickDelta * 1000 !== 0) {
     throw new Error("玩家分差总和必须与供托变化保持守恒");
   }
+}
+
+export function normalizeRoomEventDetail(detail: unknown): RoomEventDetail | undefined {
+  if (detail === undefined || detail === null) {
+    return undefined;
+  }
+  assertPlainObject(detail, "牌谱数据");
+  assertDetailJsonSize(detail);
+
+  const source = detail as Record<string, unknown>;
+  const normalized: RoomEventDetail = {};
+
+  if (source.tiles !== undefined) {
+    normalized.tiles = normalizeStringArray(source.tiles, "手牌", DETAIL_TILES_LIMIT);
+  }
+  if (source.melds !== undefined) {
+    normalized.melds = normalizeMeldDetails(source.melds);
+  }
+  if (source.winningTile !== undefined) {
+    normalized.winningTile = normalizeStringField(source.winningTile, "和牌张");
+  }
+  if (source.yaku !== undefined) {
+    normalized.yaku = normalizeYakuDetails(source.yaku);
+  }
+  if (source.han !== undefined) {
+    normalized.han = normalizeOptionalInteger(source.han, "番数");
+  }
+  if (source.fu !== undefined) {
+    normalized.fu = normalizeOptionalInteger(source.fu, "符数");
+  }
+  if (source.yakuman !== undefined) {
+    normalized.yakuman = normalizeOptionalInteger(source.yakuman, "役满数");
+  }
+  if (source.scoreText !== undefined) {
+    normalized.scoreText = normalizeStringField(source.scoreText, "点数文本");
+  }
+
+  assertDetailJsonSize(normalized);
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+export function toMyRoomSummaries(
+  rooms: readonly RoomDocument[],
+  openid: string,
+  now: number = Date.now()
+): MyRoomSummary[] {
+  return rooms.map((room) => toMyRoomSummary(room, openid, now));
+}
+
+export function toMyRoomSummary(room: RoomDocument, openid: string, now: number = Date.now()): MyRoomSummary {
+  assertOpenid(openid);
+  const rankedPlayers = [...room.players].sort((left, right) => {
+    const scoreOrder = right.score - left.score;
+    if (scoreOrder !== 0) {
+      return scoreOrder;
+    }
+    return seatRank(left.seat, room.mode) - seatRank(right.seat, room.mode);
+  });
+  const myRank = rankedPlayers.findIndex((player) => player.openid === openid) + 1;
+  if (myRank <= 0) {
+    throw new Error("玩家不在房间内");
+  }
+
+  return {
+    roomId: room._id ?? room.roomCode,
+    roomCode: room.roomCode,
+    mode: room.mode,
+    status: room.status,
+    updatedAt: room.updatedAt,
+    dateLabel: formatRoomHistoryDateLabel(room.updatedAt, now),
+    players: room.players.map((player) => ({
+      nickName: player.nickName,
+      ...optionalAvatar(player.avatarFileId),
+      seat: player.seat,
+      score: player.score,
+      isMe: player.openid === openid
+    })),
+    myRank,
+    eventCount: room.events.length
+  };
+}
+
+export function formatRoomHistoryDateLabel(timestamp: number, now: number = Date.now()): string {
+  const date = new Date(timestamp);
+  const today = startOfLocalDay(new Date(now)).getTime();
+  const target = startOfLocalDay(date).getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+  if (target === today) {
+    return "今天";
+  }
+  if (target === today - oneDay) {
+    return "昨天";
+  }
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 export function advanceRound(round: RoundState, mode: GameMode): RoundState {
@@ -521,6 +664,95 @@ function assertInteger(value: number, label: string): void {
   if (!Number.isSafeInteger(value)) {
     throw new Error(`${label}必须是整数`);
   }
+}
+
+function assertPlainObject(value: unknown, label: string): void {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`${label}必须是对象`);
+  }
+}
+
+function assertDetailJsonSize(detail: unknown): void {
+  let json = "";
+  try {
+    json = JSON.stringify(detail);
+  } catch (_error) {
+    throw new Error("牌谱数据不能序列化");
+  }
+  if ((json ?? "").length > DETAIL_JSON_LIMIT) {
+    throw new Error(`牌谱数据不能超过 ${DETAIL_JSON_LIMIT} 字符`);
+  }
+}
+
+function normalizeStringArray(value: unknown, label: string, maxLength?: number): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${label}必须是数组`);
+  }
+  if (maxLength !== undefined && value.length > maxLength) {
+    throw new Error(`${label}最多 ${maxLength} 项`);
+  }
+  return value.map((item) => normalizeStringField(item, label));
+}
+
+function normalizeMeldDetails(value: unknown): RoomEventMeldDetail[] {
+  if (!Array.isArray(value)) {
+    throw new Error("副露必须是数组");
+  }
+  return value.map((item) => {
+    assertPlainObject(item, "副露");
+    const source = item as Record<string, unknown>;
+    return {
+      type: normalizeStringField(source.type, "副露类型"),
+      tiles: normalizeStringArray(source.tiles, "副露牌")
+    };
+  });
+}
+
+function normalizeYakuDetails(value: unknown): RoomEventYakuDetail[] {
+  if (!Array.isArray(value)) {
+    throw new Error("役种必须是数组");
+  }
+  if (value.length > DETAIL_YAKU_LIMIT) {
+    throw new Error(`役种最多 ${DETAIL_YAKU_LIMIT} 项`);
+  }
+  return value.map((item) => {
+    assertPlainObject(item, "役种");
+    const source = item as Record<string, unknown>;
+    const yaku: RoomEventYakuDetail = {
+      name: normalizeStringField(source.name, "役种名称")
+    };
+    if (source.han !== undefined) {
+      yaku.han = normalizeOptionalInteger(source.han, "役种番数");
+    }
+    if (source.yakuman !== undefined) {
+      yaku.yakuman = normalizeOptionalInteger(source.yakuman, "役满数");
+    }
+    return yaku;
+  });
+}
+
+function normalizeStringField(value: unknown, label: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`${label}必须是字符串`);
+  }
+  return value;
+}
+
+function normalizeOptionalInteger(value: unknown, label: string): number {
+  if (typeof value !== "number") {
+    throw new Error(`${label}必须是数字`);
+  }
+  assertInteger(value, label);
+  return value;
+}
+
+function seatRank(seat: Seat, mode: GameMode): number {
+  const rank = seatOrder(mode).indexOf(seat);
+  return rank >= 0 ? rank : Number.MAX_SAFE_INTEGER;
+}
+
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function optionalAvatar(avatarFileId: string | undefined): { avatarFileId?: string } {

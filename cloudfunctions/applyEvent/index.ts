@@ -3,6 +3,7 @@ import {
   applyRoomEvent,
   EventInput,
   RoomDocument,
+  RoomEventDetail,
   RoomEventType,
   undoLastEvent
 } from "../common/roomLogic";
@@ -19,6 +20,7 @@ interface ApplyEventRequest {
   honbaDelta?: number;
   advanceRound?: boolean;
   note?: string;
+  detail?: RoomEventDetail;
 }
 
 exports.main = async (event: ApplyEventRequest) => {
@@ -75,7 +77,8 @@ function normalizeEventInput(event: ApplyEventRequest, actorOpenid: string): Eve
       riichiStickDelta: event.riichiStickDelta ?? 1,
       honbaDelta: event.honbaDelta ?? 0,
       advanceRound: false,
-      note: event.note
+      note: event.note,
+      detail: event.detail
     };
   }
 
@@ -86,6 +89,7 @@ function normalizeEventInput(event: ApplyEventRequest, actorOpenid: string): Eve
     riichiStickDelta: event.riichiStickDelta ?? 0,
     honbaDelta: event.honbaDelta ?? 0,
     advanceRound: event.advanceRound === true,
-    note: event.note
+    note: event.note,
+    detail: event.detail
   };
 }

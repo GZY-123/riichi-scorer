@@ -118,6 +118,12 @@ Page({
     });
   },
 
+  onHistoryDetailTap() {
+    wx.navigateTo({
+      url: `/pages/history-detail/history-detail?roomId=${this.data.roomId}`
+    });
+  },
+
   scoreClass(score: number): "score-positive" | "score-negative" | "score-neutral" {
     if (score > 0) return "score-positive";
     if (score < 0) return "score-negative";

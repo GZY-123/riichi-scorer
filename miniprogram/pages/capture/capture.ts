@@ -132,6 +132,17 @@ interface ScoreHandResult {
   };
 }
 
+interface HandRecordDetail {
+  tiles?: string[];
+  melds?: Array<{ type: string; tiles: string[] }>;
+  winningTile?: string;
+  yaku?: Array<{ name: string; han?: number; yakuman?: number }>;
+  han?: number;
+  fu?: number;
+  yakuman?: number;
+  scoreText?: string;
+}
+
 interface DeltaRow {
   openid: string;
   label: string;
@@ -163,6 +174,7 @@ interface ScorePreview {
   paymentText: string;
   deltaRows: DeltaRow[];
   applyEvent: ScoreHandResult["applyEvent"];
+  detail: HandRecordDetail;
   settlementCard: WinSettlementCard;
 }
 
@@ -679,7 +691,8 @@ Page({
         name: "applyEvent",
         data: {
           roomId: this.data.roomId,
-          ...preview.applyEvent
+          ...preview.applyEvent,
+          detail: preview.detail
         }
       });
       this.vibrateLight();
@@ -864,7 +877,26 @@ Page({
       paymentText,
       deltaRows,
       applyEvent: result.applyEvent,
+      detail: this.toHandRecordDetail(result, valueText),
       settlementCard: this.toSettlementCard(result, deltaRows, paymentText)
+    };
+  },
+
+  toHandRecordDetail(result: ScoreHandResult, scoreText: string): HandRecordDetail {
+    const tiles = this.data.tiles.map((tile) => tile.value);
+    return {
+      tiles,
+      melds: this.data.melds.map((meld) => ({ type: meld.type, tiles: [...meld.tiles] })),
+      winningTile: this.data.tiles.find((tile) => tile.isWinning)?.value ?? tiles[tiles.length - 1],
+      yaku: result.yaku.map((item) => ({
+        name: item.name,
+        ...(item.han !== undefined ? { han: item.han } : {}),
+        ...(item.yakuman !== undefined ? { yakuman: item.yakuman } : {})
+      })),
+      han: result.han,
+      fu: result.fu,
+      yakuman: result.yakuman,
+      scoreText
     };
   },
 

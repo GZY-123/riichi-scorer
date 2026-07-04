@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "历史牌谱",
+  "usingComponents": {
+    "tile-image": "../../components/tile-image/tile-image"
+  }
+}

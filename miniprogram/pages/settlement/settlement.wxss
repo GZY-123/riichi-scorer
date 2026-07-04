@@ -157,6 +157,6 @@
   font-size: 22rpx;
 }
 
-.return-home-button {
+.settlement-actions {
   margin-top: 32rpx;
 }

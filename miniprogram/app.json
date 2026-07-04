@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/history/history",
+    "pages/history-detail/history-detail",
     "pages/room/room",
     "pages/capture/capture",
     "pages/settlement/settlement"

@@ -1,0 +1,182 @@
+.history-page {
+  padding-top: 40rpx;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+  padding: 0 8rpx;
+}
+
+.history-title {
+  color: var(--felt-deep);
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.history-subtitle {
+  margin-top: 8rpx;
+  color: var(--muted);
+  font-size: 25rpx;
+}
+
+.header-chip,
+.mode-badge,
+.status-badge {
+  flex: 0 0 auto;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.header-chip {
+  background: rgba(15, 83, 66, 0.1);
+  color: var(--felt);
+}
+
+.loading-panel {
+  color: var(--muted);
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.empty-panel {
+  padding-top: 48rpx;
+  padding-bottom: 48rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: var(--muted);
+  font-size: 28rpx;
+}
+
+.empty-button {
+  margin-top: 28rpx;
+}
+
+.room-card {
+  display: grid;
+  grid-template-columns: 104rpx minmax(0, 1fr) 72rpx;
+  gap: 20rpx;
+  align-items: center;
+  padding: 24rpx;
+}
+
+.room-card:active {
+  background: #fdfcf8;
+}
+
+.card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  align-items: flex-start;
+}
+
+.date-text {
+  color: var(--ink);
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.mode-badge {
+  background: #edf4f1;
+  color: var(--felt);
+}
+
+.card-main {
+  min-width: 0;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.room-code {
+  color: var(--felt-deep);
+  font-size: 31rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.status-badge {
+  background: rgba(184, 134, 44, 0.12);
+  color: var(--amber);
+  font-size: 22rpx;
+}
+
+.event-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 22rpx;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8rpx 16rpx;
+  margin-top: 16rpx;
+}
+
+.player-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8rpx;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 23rpx;
+}
+
+.player-line.me {
+  color: var(--felt-deep);
+  font-weight: 700;
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-score {
+  flex: 0 0 auto;
+}
+
+.rank-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--muted);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.rank-badge.rank-1 {
+  background: var(--gold);
+  color: var(--ivory);
+}
+
+.rank-badge.rank-2 {
+  background: var(--silver);
+  color: #ffffff;
+}
+
+.rank-badge.rank-3 {
+  background: var(--bronze);
+  color: #ffffff;
+}

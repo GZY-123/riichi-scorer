@@ -10,13 +10,10 @@
         <view class="label">个人资料</view>
         <view class="profile-state">{{profileSaved && !editingProfile ? "已登录" : "填写后进入房间"}}</view>
       </view>
-      <button
-        wx:if="{{profileSaved && !editingProfile}}"
-        class="mini-button"
-        bindtap="onEditProfile"
-      >
-        修改
-      </button>
+      <view wx:if="{{profileSaved && !editingProfile}}" class="profile-head-actions">
+        <button class="mini-button" bindtap="onHistoryTap">对局记录</button>
+        <button class="mini-button" bindtap="onEditProfile">修改</button>
+      </view>
     </view>
 
     <view wx:if="{{profileSaved && !editingProfile}}" class="profile-summary">
