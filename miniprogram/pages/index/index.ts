@@ -134,6 +134,12 @@ Page({
     });
   },
 
+  onTenpaiTap() {
+    wx.navigateTo({
+      url: "/pages/tenpai/tenpai"
+    });
+  },
+
   onYakuReferenceTap() {
     wx.navigateTo({
       url: "/pages/yaku-reference/yaku-reference"

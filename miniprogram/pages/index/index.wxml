@@ -13,6 +13,7 @@
       </view>
       <view wx:if="{{profileSaved && !editingProfile}}" class="profile-head-actions">
         <button class="mini-button" bindtap="onHistoryTap">对局记录</button>
+        <button class="mini-button" bindtap="onTenpaiTap">听牌计算</button>
         <button class="mini-button" bindtap="onEditProfile">修改</button>
       </view>
     </view>

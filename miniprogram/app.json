@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/yaku-reference/yaku-reference",
+    "pages/tenpai/tenpai",
     "pages/history/history",
     "pages/history-detail/history-detail",
     "pages/room/room",

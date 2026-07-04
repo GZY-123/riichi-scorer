@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "听牌计算",
+  "usingComponents": {
+    "tile-image": "../../components/tile-image/tile-image",
+    "tile-keyboard": "../../components/tile-keyboard/tile-keyboard"
+  }
+}

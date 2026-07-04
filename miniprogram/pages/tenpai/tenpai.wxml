@@ -1,0 +1,49 @@
+<view class="page tenpai-page">
+  <view class="panel intro-panel">
+    <view class="intro-copy">
+      <view class="page-title">听牌计算</view>
+      <view class="page-desc">输入 13 张门清手牌，计算听牌</view>
+    </view>
+    <view class="mode-switch">
+      <button class="mode-pill {{mode === '4p' ? 'active' : ''}}" data-mode="4p" bindtap="onModeTap">四麻</button>
+      <button class="mode-pill {{mode === '3p' ? 'active' : ''}}" data-mode="3p" bindtap="onModeTap">三麻</button>
+    </view>
+  </view>
+
+  <view class="section panel">
+    <view class="section-heading">
+      <view>
+        <view class="section-title">手牌</view>
+        <view class="section-hint">点牌可删除该张</view>
+      </view>
+      <button class="mini-button" bindtap="onSortTap">理牌</button>
+    </view>
+
+    <scroll-view class="tile-scroll" scroll-x="true" enable-flex="true">
+      <view class="tile-strip">
+        <block wx:for="{{tiles}}" wx:key="key">
+          <view class="selected-tile" data-index="{{index}}" bindtap="onTileTap">
+            <tile-image code="{{item.code}}" size="medium" />
+          </view>
+        </block>
+        <view wx:if="{{tiles.length === 0}}" class="strip-empty">点下方牌键开始输入</view>
+      </view>
+    </scroll-view>
+
+    <view class="progress-line num">{{progressText}}</view>
+    <tile-keyboard bind:tap="onKeyboardTap" bind:delete="onKeyboardDelete" />
+  </view>
+
+  <view class="section panel result-panel result-{{resultTone}}">
+    <view class="result-title">{{resultTitle}}</view>
+    <view wx:if="{{resultHint}}" class="result-hint">{{resultHint}}</view>
+    <view wx:if="{{waits.length > 0}}" class="wait-grid">
+      <block wx:for="{{waits}}" wx:key="key">
+        <view class="wait-item">
+          <tile-image code="{{item.tile}}" size="medium" />
+          <view class="wait-count">剩 {{item.remaining}} 枚</view>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>
