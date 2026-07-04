@@ -143,7 +143,8 @@ async function ensureModelFile(onProgress?: ProgressCallback): Promise<string> {
   const tempFilePath = await downloadCloudFile(fileID, onProgress);
   const fs = wx.getFileSystemManager();
   try {
-    fs.saveFileSync(tempFilePath, MODEL_CACHE_PATH);
+    // saveFile 一族有 10MB 配额，12MB 模型必须走 copyFile 写入用户数据目录（200MB 配额）
+    fs.copyFileSync(tempFilePath, MODEL_CACHE_PATH);
   } catch (error) {
     throw new Error(`本地模型缓存失败：${errorMessage(error)}`);
   }
