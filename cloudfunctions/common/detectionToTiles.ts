@@ -44,11 +44,17 @@ const HONOR_TILE_BY_CLASS: Record<string, string> = {
   chung: "7z"
 };
 
+// 牌背/盖牌类别：不属于手牌，直接忽略
+const IGNORED_CLASSES = new Set(["0z", "back", "ura", "facedown", "hidden"]);
+
 export function detectionToTiles(detections: readonly TileDetection[]): DetectionToTilesResult {
   const mapped: DetectionWithTile[] = [];
   const unknownClasses: string[] = [];
 
   for (const detection of detections) {
+    if (IGNORED_CLASSES.has(normalizeClassName(detection.class))) {
+      continue;
+    }
     const tile = mapRoboflowClassToTile(detection.class);
     if (tile === undefined) {
       unknownClasses.push(detection.class);

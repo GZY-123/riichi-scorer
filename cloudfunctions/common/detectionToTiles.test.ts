@@ -103,3 +103,15 @@ describe("detectionToTiles errors and confidence", () => {
     expect(result.confidence).toBeCloseTo(0.5);
   });
 });
+
+describe("back tile handling", () => {
+  it("ignores face-down/back detections instead of failing", () => {
+    const result = detectionToTiles([
+      { x: 10, y: 10, width: 20, height: 30, class: "7z", confidence: 0.9 },
+      { x: 40, y: 10, width: 20, height: 30, class: "0z", confidence: 0.8 },
+      { x: 70, y: 10, width: 20, height: 30, class: "Back", confidence: 0.7 },
+      { x: 100, y: 10, width: 20, height: 30, class: "6z", confidence: 0.85 }
+    ]);
+    expect(result.tiles).toEqual(["7z", "6z"]);
+  });
+});
