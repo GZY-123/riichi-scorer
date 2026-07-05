@@ -3,6 +3,18 @@ export type RoomStatus = "waiting" | "playing" | "finished";
 export type Seat = "east" | "south" | "west" | "north";
 export type PrevalentWind = "east" | "south" | "west" | "north";
 export type RoomEventType = "win" | "draw" | "riichi" | "finish" | "undo";
+export type RoomLength = "east" | "hanchan";
+export type RoomUma = [number, number, number, number] | [number, number, number];
+
+export interface RoomRules {
+  length: RoomLength;
+  startScore: number;
+  returnScore: number;
+  uma: RoomUma;
+  tobi: boolean;
+  kiriageMangan: boolean;
+  tsumoLoss: boolean;
+}
 
 export interface PlayerState {
   openid: string;
@@ -75,6 +87,7 @@ export interface RoomDocument {
   _id?: string;
   roomCode: string;
   mode: GameMode;
+  rules?: RoomRules;
   status: RoomStatus;
   players: PlayerState[];
   round: RoundState;
@@ -130,6 +143,27 @@ const INITIAL_SCORE_BY_MODE: Record<GameMode, number> = {
   "4p": 25000
 };
 
+const DEFAULT_RULES_BY_MODE: Record<GameMode, RoomRules> = {
+  "3p": {
+    length: "hanchan",
+    startScore: 35000,
+    returnScore: 40000,
+    uma: [15, 0, -15],
+    tobi: true,
+    kiriageMangan: false,
+    tsumoLoss: false
+  },
+  "4p": {
+    length: "hanchan",
+    startScore: 25000,
+    returnScore: 30000,
+    uma: [20, 10, -10, -20],
+    tobi: true,
+    kiriageMangan: false,
+    tsumoLoss: false
+  }
+};
+
 const WIND_ORDER: readonly PrevalentWind[] = ["east", "south", "west", "north"];
 const DETAIL_JSON_LIMIT = 4096;
 const DETAIL_TILES_LIMIT = 20;
@@ -137,6 +171,41 @@ const DETAIL_YAKU_LIMIT = 20;
 
 export function initialScore(mode: GameMode): number {
   return INITIAL_SCORE_BY_MODE[mode];
+}
+
+export function defaultRules(mode: GameMode): RoomRules {
+  assertMode(mode);
+  const rules = DEFAULT_RULES_BY_MODE[mode];
+  return {
+    ...rules,
+    uma: [...rules.uma] as RoomUma
+  };
+}
+
+export function validateRules(mode: GameMode, value: unknown): RoomRules {
+  assertMode(mode);
+  assertPlainObject(value, "规则");
+  const source = value as Record<string, unknown>;
+  const length = normalizeRuleLength(source.length);
+  const startScore = normalizeRuleScore(source.startScore, "起始点");
+  const returnScore = normalizeRuleScore(source.returnScore, "返点");
+  if (returnScore < startScore) {
+    throw new Error("返点不能低于起始点");
+  }
+
+  return {
+    length,
+    startScore,
+    returnScore,
+    uma: normalizeRuleUma(source.uma, mode),
+    tobi: normalizeRuleBoolean(source.tobi, "击飞"),
+    kiriageMangan: normalizeRuleBoolean(source.kiriageMangan, "切上满贯"),
+    tsumoLoss: normalizeRuleBoolean(source.tsumoLoss, "自摸损")
+  };
+}
+
+export function resolveRules(room: Pick<RoomDocument, "mode" | "rules">): RoomRules {
+  return room.rules === undefined ? defaultRules(room.mode) : validateRules(room.mode, room.rules);
 }
 
 export function seatOrder(mode: GameMode): readonly Seat[] {
@@ -198,11 +267,13 @@ export function createInitialRoom(params: {
   creatorOpenid: string;
   creatorNickName: string;
   creatorAvatarFileId?: string;
+  rules?: unknown;
   now: number;
 }): RoomDocument {
   assertMode(params.mode);
   assertRoomCode(params.roomCode);
   assertOpenid(params.creatorOpenid);
+  const rules = params.rules === undefined ? defaultRules(params.mode) : validateRules(params.mode, params.rules);
 
   const players = assignSeats(
     [
@@ -211,7 +282,7 @@ export function createInitialRoom(params: {
         nickName: normalizeNickName(params.creatorNickName),
         ...optionalAvatar(params.creatorAvatarFileId),
         seat: "east",
-        score: initialScore(params.mode)
+        score: rules.startScore
       }
     ],
     params.mode
@@ -221,6 +292,7 @@ export function createInitialRoom(params: {
     _id: params.roomCode,
     roomCode: params.roomCode,
     mode: params.mode,
+    rules,
     status: "waiting",
     players,
     round: createInitialRound(params.mode),
@@ -243,6 +315,7 @@ export function joinPlayer(
   }
 
   const profile = normalizeUserProfile({ nickName, avatarFileId });
+  const rules = resolveRules(room);
   const existingIndex = room.players.findIndex((player) => player.openid === openid);
   if (existingIndex >= 0) {
     const players = room.players.map((player, index) =>
@@ -253,6 +326,7 @@ export function joinPlayer(
       restored: true,
       room: {
         ...room,
+        rules,
         players: assignSeats(players, room.mode),
         updatedAt: now
       }
@@ -271,7 +345,7 @@ export function joinPlayer(
         nickName: profile.nickName,
         ...optionalAvatar(profile.avatarFileId),
         seat: seatOrder(room.mode)[room.players.length],
-        score: initialScore(room.mode)
+        score: rules.startScore
       }
     ],
     room.mode
@@ -281,6 +355,7 @@ export function joinPlayer(
     restored: false,
     room: {
       ...room,
+      rules,
       players,
       status: players.length === maxPlayers(room.mode) ? "playing" : "waiting",
       updatedAt: now
@@ -743,6 +818,52 @@ function normalizeOptionalInteger(value: unknown, label: string): number {
     throw new Error(`${label}必须是数字`);
   }
   assertInteger(value, label);
+  return value;
+}
+
+function normalizeRuleLength(value: unknown): RoomLength {
+  if (value !== "east" && value !== "hanchan") {
+    throw new Error("局数必须是东风或半庄");
+  }
+  return value;
+}
+
+function normalizeRuleScore(value: unknown, label: string): number {
+  if (typeof value !== "number") {
+    throw new Error(`${label}必须是数字`);
+  }
+  assertInteger(value, label);
+  if (value < 1000 || value > 99999 || value % 100 !== 0) {
+    throw new Error(`${label}必须是 1000-99999 的百点整数`);
+  }
+  return value;
+}
+
+function normalizeRuleUma(value: unknown, mode: GameMode): RoomUma {
+  if (!Array.isArray(value)) {
+    throw new Error("顺位马必须是数组");
+  }
+  const expectedLength = maxPlayers(mode);
+  if (value.length !== expectedLength) {
+    throw new Error(`${mode} 顺位马必须有 ${expectedLength} 项`);
+  }
+  const uma = value.map((item, index) => {
+    if (typeof item !== "number") {
+      throw new Error(`顺位马第 ${index + 1} 项必须是数字`);
+    }
+    assertInteger(item, `顺位马第 ${index + 1} 项`);
+    return item;
+  });
+  if (uma.reduce((sum, item) => sum + item, 0) !== 0) {
+    throw new Error("顺位马总和必须为 0");
+  }
+  return [...uma] as RoomUma;
+}
+
+function normalizeRuleBoolean(value: unknown, label: string): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error(`${label}必须是布尔值`);
+  }
   return value;
 }
 

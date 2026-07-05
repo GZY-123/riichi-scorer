@@ -3,6 +3,7 @@ import {
   applyRoomEvent,
   assignSeats,
   createInitialRoom,
+  defaultRules,
   formatRoomHistoryDateLabel,
   generateUniqueRoomCode,
   joinPlayer,
@@ -10,10 +11,12 @@ import {
   normalizeRoomEventDetail,
   normalizeUserProfile,
   PlayerState,
+  resolveRules,
   resolveUserProfile,
   RoomDocument,
   toMyRoomSummary,
   undoLastEvent,
+  validateRules,
   validateDeltas
 } from "./roomLogic";
 
@@ -56,6 +59,90 @@ describe("seat assignment", () => {
       "west",
       "north"
     ]);
+  });
+});
+
+describe("room rules", () => {
+  it("returns mode-specific default rules", () => {
+    expect(defaultRules("4p")).toEqual({
+      length: "hanchan",
+      startScore: 25000,
+      returnScore: 30000,
+      uma: [20, 10, -10, -20],
+      tobi: true,
+      kiriageMangan: false,
+      tsumoLoss: false
+    });
+    expect(defaultRules("3p")).toEqual({
+      length: "hanchan",
+      startScore: 35000,
+      returnScore: 40000,
+      uma: [15, 0, -15],
+      tobi: true,
+      kiriageMangan: false,
+      tsumoLoss: false
+    });
+  });
+
+  it("validates supported rule payloads", () => {
+    expect(
+      validateRules("4p", {
+        length: "east",
+        startScore: 30000,
+        returnScore: 30000,
+        uma: [10, 5, -5, -10],
+        tobi: false,
+        kiriageMangan: true,
+        tsumoLoss: false
+      })
+    ).toEqual({
+      length: "east",
+      startScore: 30000,
+      returnScore: 30000,
+      uma: [10, 5, -5, -10],
+      tobi: false,
+      kiriageMangan: true,
+      tsumoLoss: false
+    });
+  });
+
+  it("rejects invalid score and uma settings", () => {
+    const valid = defaultRules("4p");
+
+    expect(() => validateRules("4p", { ...valid, startScore: 999 })).toThrow(
+      "起始点必须是 1000-99999 的百点整数"
+    );
+    expect(() => validateRules("4p", { ...valid, startScore: 25050 })).toThrow(
+      "起始点必须是 1000-99999 的百点整数"
+    );
+    expect(() => validateRules("4p", { ...valid, returnScore: 24000 })).toThrow("返点不能低于起始点");
+    expect(() => validateRules("4p", { ...valid, uma: [20, 10, -30] })).toThrow(
+      "4p 顺位马必须有 4 项"
+    );
+    expect(() => validateRules("3p", { ...defaultRules("3p"), uma: [15, 5, -15] })).toThrow(
+      "顺位马总和必须为 0"
+    );
+  });
+
+  it("resolves old room documents without stored rules to defaults", () => {
+    const oldRoom: Pick<RoomDocument, "mode" | "rules"> = { mode: "4p" };
+    expect(resolveRules(oldRoom)).toEqual(defaultRules("4p"));
+  });
+
+  it("uses rule start scores for room creation and later joins", () => {
+    const room = createInitialRoom({
+      roomCode: "123456",
+      mode: "4p",
+      creatorOpenid: "openid_1",
+      creatorNickName: "东家",
+      rules: { ...defaultRules("4p"), startScore: 30000, returnScore: 30000 },
+      now: 1
+    });
+    const joined = joinPlayer(room, "openid_2", "南家", 2);
+
+    expect(room.rules?.startScore).toBe(30000);
+    expect(room.players[0].score).toBe(30000);
+    expect(joined.room.players[1].score).toBe(30000);
   });
 });
 

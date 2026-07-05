@@ -1,4 +1,5 @@
 import type { GameMode, PlayerState, RoomDocument, Seat } from "./roomLogic";
+import { resolveRules } from "./roomLogic";
 import {
   MeldInput,
   assertTileCopiesWithinFour,
@@ -94,6 +95,8 @@ export interface EngineApi {
     mode: GameMode;
     honba: number;
     riichiSticks: number;
+    kiriageMangan?: boolean;
+    tsumoLoss?: boolean;
   }): EngineScoreResult;
 }
 
@@ -194,6 +197,7 @@ export function buildScoreHandPreview(
   const honba = normalizeNonNegativeInteger(request.honba ?? room.round.honba, "本场");
   const riichiSticks = normalizeNonNegativeInteger(request.riichiSticks ?? room.round.riichiSticks, "供托");
   const nukiDora = normalizeNonNegativeInteger(request.nukiDora ?? countNorthMelds(melds), "拔北数");
+  const rules = resolveRules(room);
 
   const context: EngineContext = {
     mode,
@@ -223,7 +227,9 @@ export function buildScoreHandPreview(
     winType,
     mode,
     honba,
-    riichiSticks
+    riichiSticks,
+    kiriageMangan: rules.kiriageMangan,
+    tsumoLoss: rules.tsumoLoss
   });
   const deltas = buildWinDeltas({
     players: room.players,

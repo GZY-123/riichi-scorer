@@ -17,6 +17,19 @@
   font-size: 26rpx;
 }
 
+.rules-text {
+  margin-top: 10rpx;
+  color: var(--felt);
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.estimate-note {
+  margin-top: 6rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+}
+
 .status {
   padding: 8rpx 24rpx;
   border-radius: 26rpx;

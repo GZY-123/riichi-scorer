@@ -90,17 +90,102 @@
         <radio value="4p" checked="{{mode === '4p'}}" color="#176b5b" />
         <view>
           <view class="mode-title">四麻</view>
-          <view class="mode-desc">4 人，初始 25000 点</view>
+          <view class="mode-desc">4 人，默认 25000 点</view>
         </view>
       </label>
       <label class="mode-option {{mode === '3p' ? 'active' : ''}}">
         <radio value="3p" checked="{{mode === '3p'}}" color="#176b5b" />
         <view>
           <view class="mode-title">三麻</view>
-          <view class="mode-desc">3 人，初始 35000 点</view>
+          <view class="mode-desc">3 人，默认 35000 点</view>
         </view>
       </label>
     </radio-group>
+    <view class="rules-panel">
+      <button class="rules-toggle" bindtap="onRulesToggle">
+        <view>
+          <view class="rules-title">对局规则</view>
+          <view class="rules-summary">{{rulesSummary}}</view>
+        </view>
+        <view class="rules-toggle-icon">{{rulesExpanded ? "收起" : "展开"}}</view>
+      </button>
+      <view wx:if="{{rulesExpanded}}" class="rules-body">
+        <view class="rule-row">
+          <view class="rule-label">局数</view>
+          <view class="segment-group">
+            <button
+              class="segment-button {{rules.length === 'east' ? 'active' : ''}}"
+              data-length="east"
+              bindtap="onRuleLengthTap"
+            >
+              东风
+            </button>
+            <button
+              class="segment-button {{rules.length === 'hanchan' ? 'active' : ''}}"
+              data-length="hanchan"
+              bindtap="onRuleLengthTap"
+            >
+              半庄
+            </button>
+          </view>
+        </view>
+        <view class="rule-grid">
+          <label class="rule-field">
+            <text class="rule-label">起始点</text>
+            <input
+              class="input rule-input num"
+              type="number"
+              value="{{rules.startScore}}"
+              bindinput="onRuleStartScoreInput"
+            />
+          </label>
+          <label class="rule-field">
+            <text class="rule-label">返点</text>
+            <input
+              class="input rule-input num"
+              type="number"
+              value="{{rules.returnScore}}"
+              bindinput="onRuleReturnScoreInput"
+            />
+          </label>
+        </view>
+        <view class="rule-row">
+          <view class="rule-label">顺位马</view>
+          <picker
+            mode="selector"
+            range="{{umaOptionLabels}}"
+            value="{{umaIndex}}"
+            bindchange="onUmaChange"
+          >
+            <view class="picker-value">{{umaOptionLabels[umaIndex]}}</view>
+          </picker>
+        </view>
+        <view class="switch-grid">
+          <label class="switch-row">
+            <text class="rule-label">击飞</text>
+            <switch checked="{{rules.tobi}}" color="#176b5b" data-key="tobi" bindchange="onRuleSwitchChange" />
+          </label>
+          <label class="switch-row">
+            <text class="rule-label">切上满贯</text>
+            <switch
+              checked="{{rules.kiriageMangan}}"
+              color="#176b5b"
+              data-key="kiriageMangan"
+              bindchange="onRuleSwitchChange"
+            />
+          </label>
+          <label wx:if="{{mode === '3p'}}" class="switch-row">
+            <text class="rule-label">自摸损</text>
+            <switch
+              checked="{{rules.tsumoLoss}}"
+              color="#176b5b"
+              data-key="tsumoLoss"
+              bindchange="onRuleSwitchChange"
+            />
+          </label>
+        </view>
+      </view>
+    </view>
     <button class="primary-button create-button" loading="{{creating}}" bindtap="onCreateRoom">
       创建房间
     </button>

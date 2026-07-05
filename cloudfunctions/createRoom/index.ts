@@ -14,6 +14,7 @@ const MAX_CODE_ATTEMPTS = 30;
 
 interface CreateRoomRequest {
   mode?: GameMode;
+  rules?: unknown;
   nickName?: string;
   avatarFileId?: string;
 }
@@ -41,6 +42,7 @@ exports.main = async (event: CreateRoomRequest) => {
       creatorOpenid: OPENID,
       creatorNickName: profile.nickName,
       creatorAvatarFileId: profile.avatarFileId,
+      rules: event.rules,
       now
     });
 
@@ -65,6 +67,7 @@ function toCreateRoomResponse(room: RoomDocument, playerOpenid: string) {
   return {
     roomId: room.roomCode,
     roomCode: room.roomCode,
+    mode: room.mode,
     playerOpenid,
     status: room.status
   };

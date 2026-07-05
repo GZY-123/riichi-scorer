@@ -205,4 +205,52 @@ describe("score hand preview", () => {
     expect(preview.context).toMatchObject({ seatWind: "south", prevalentWind: "east", riichi: true });
     expect(preview.note).toContain("拍照算点");
   });
+
+  it("passes room score rules through to engine scoring", () => {
+    let scoreInput: Parameters<EngineApi["calcScore"]>[0] | undefined;
+    const engine: EngineApi = {
+      parseHand: () => ({ divisions: true }),
+      detectYaku: () => ({
+        yaku: [{ id: "riichi", name: "Riichi", han: 1 }],
+        han: 3,
+        yakuHan: 3,
+        doraHan: 0,
+        yakuman: 0,
+        hasYaku: true
+      }),
+      calcFu: () => ({ fu: 60, rawFu: 60, details: [] }),
+      calcScore: (input) => {
+        scoreInput = input;
+        return score({ ron: 8000, total: 9000, riichiBonus: 1000 });
+      }
+    };
+
+    buildScoreHandPreview(
+      {
+        winnerOpenid: "south",
+        loserOpenid: "west",
+        winType: "ron",
+        tiles: ["1m", "2m", "3m", "4p", "5p", "6p", "2s", "3s", "4s", "7s", "8s", "9s", "5z", "5z"],
+        winningTile: "3m"
+      },
+      {
+        ...room(),
+        rules: {
+          length: "hanchan",
+          startScore: 25000,
+          returnScore: 30000,
+          uma: [20, 10, -10, -20],
+          tobi: true,
+          kiriageMangan: true,
+          tsumoLoss: true
+        }
+      },
+      engine
+    );
+
+    expect(scoreInput).toMatchObject({
+      kiriageMangan: true,
+      tsumoLoss: true
+    });
+  });
 });

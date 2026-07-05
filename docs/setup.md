@@ -77,7 +77,9 @@ npm run build   # = build:engine:cloud + build:functions
 
 - `listMyRooms` 必须上传部署，否则首页「对局记录」无法读取历史房间。
 - `applyEvent` 增加和牌牌谱 `detail` 透传，升级后也需要重新上传部署。
+- `createRoom` 增加房间规则写入，`scoreHand` 会读取房间规则中的切上满贯与三麻自摸损；升级后这两个云函数也需要重新上传部署。
 - 历史列表会按 `rooms.updatedAt` 倒序读取最近 30 场；数据量增大后，可在云数据库为 `rooms.updatedAt` 建降序索引作为可选优化。
+- 旧房间文档没有 `rules` 字段时会自动按模式回退默认规则：四麻半庄 25000/30000、10-20 马；三麻半庄 35000/40000、15-0 马。
 
 ## 6. 本地预览流程
 
@@ -89,7 +91,7 @@ npm run build   # = build:engine:cloud + build:functions
 
 ## 7. 当前功能边界
 
-- 本期不实现役种识别与算点，和牌/流局通过手动录入各家 `deltas` 完成。
-- 「拍照识别」按钮仅提示「开发中」。
-- 结算页当前按素点排序，最终得点先等于素点；后续接入 `engine/` 后替换精算逻辑。
-- 云函数中的纯逻辑位于 `cloudfunctions/common/roomLogic.ts`，可用 `npx vitest run` 验证。
+- 房间支持创建时设置局数、起始点、返点、顺位马、击飞、切上满贯与三麻自摸损。
+- 拍照算点会调用 `scoreHand` 并落账为房间事件，无法识别时仍保留手动录入。
+- 结算页使用端侧 `engine/` 结算能力计算返点、顺位马、供托归一位与最终精算得点。
+- 云函数中的纯逻辑位于 `cloudfunctions/common/roomLogic.ts` 和 `cloudfunctions/common/scoreLogic.ts`，可用 `npx vitest run` 验证。

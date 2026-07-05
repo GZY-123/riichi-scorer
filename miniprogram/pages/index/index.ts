@@ -5,6 +5,14 @@ import {
   writeCachedUserProfile
 } from "../../utils/profile";
 import { LastRoomRecord, readLastRoom, writeLastRoom } from "../../utils/lastRoom";
+import {
+  defaultRoomRules,
+  RoomRules,
+  rulesSummary,
+  umaOptionIndex,
+  umaOptionsForMode,
+  validateRoomRules
+} from "./rules";
 
 type GameMode = "3p" | "4p";
 
@@ -23,6 +31,27 @@ interface AvatarEvent {
 interface ModeChangeEvent {
   detail: {
     value: GameMode;
+  };
+}
+
+interface TapEvent {
+  currentTarget: {
+    dataset: Record<string, string | number | undefined>;
+  };
+}
+
+interface PickerEvent {
+  detail: {
+    value: string;
+  };
+}
+
+interface SwitchEvent {
+  detail: {
+    value: boolean;
+  };
+  currentTarget: {
+    dataset: Record<string, string | number | undefined>;
   };
 }
 
@@ -52,6 +81,11 @@ Page({
     savingProfile: false,
     uploadingAvatar: false,
     mode: "4p" as GameMode,
+    rulesExpanded: false,
+    rules: defaultRoomRules("4p"),
+    rulesSummary: rulesSummary("4p", defaultRoomRules("4p")),
+    umaOptionLabels: umaOptionsForMode("4p").map((option) => option.label),
+    umaIndex: 0,
     roomCode: "",
     lastRoom: null as LastRoomRecord | null,
     creating: false,
@@ -166,7 +200,45 @@ Page({
   },
 
   onModeChange(event: ModeChangeEvent) {
-    this.setData({ mode: event.detail.value });
+    const mode = event.detail.value;
+    this.applyRules(mode, defaultRoomRules(mode));
+  },
+
+  onRulesToggle() {
+    this.setData({ rulesExpanded: !this.data.rulesExpanded });
+  },
+
+  onRuleLengthTap(event: TapEvent) {
+    const length = event.currentTarget.dataset.length;
+    if (length !== "east" && length !== "hanchan") {
+      return;
+    }
+    this.updateRules({ length });
+  },
+
+  onRuleStartScoreInput(event: InputEvent) {
+    this.updateRules({ startScore: this.parseRuleNumber(event.detail.value) });
+  },
+
+  onRuleReturnScoreInput(event: InputEvent) {
+    this.updateRules({ returnScore: this.parseRuleNumber(event.detail.value) });
+  },
+
+  onUmaChange(event: PickerEvent) {
+    const index = Number(event.detail.value);
+    const option = umaOptionsForMode(this.data.mode)[index];
+    if (option === undefined) {
+      return;
+    }
+    this.updateRules({ uma: option.value });
+  },
+
+  onRuleSwitchChange(event: SwitchEvent) {
+    const key = event.currentTarget.dataset.key;
+    if (key !== "tobi" && key !== "kiriageMangan" && key !== "tsumoLoss") {
+      return;
+    }
+    this.updateRules({ [key]: event.detail.value } as Pick<RoomRules, typeof key>);
   },
 
   onContinueRoom() {
@@ -181,6 +253,13 @@ Page({
   },
 
   async onCreateRoom() {
+    const rules = this.data.rules;
+    const rulesError = validateRoomRules(this.data.mode, rules);
+    if (rulesError !== null) {
+      wx.showToast({ title: rulesError, icon: "none" });
+      return;
+    }
+
     const profile = await this.ensureSavedProfile();
     if (!profile) {
       return;
@@ -191,7 +270,8 @@ Page({
       const response = (await wx.cloud.callFunction({
         name: "createRoom",
         data: this.withProfilePayload({
-          mode: this.data.mode
+          mode: this.data.mode,
+          rules
         })
       })) as { result?: RoomFunctionResult };
 
@@ -317,6 +397,34 @@ Page({
       nickName: this.data.nickName.trim(),
       ...(this.data.avatarFileId ? { avatarFileId: this.data.avatarFileId } : {})
     };
+  },
+
+  applyRules(mode: GameMode, rules: RoomRules) {
+    const options = umaOptionsForMode(mode);
+    this.setData({
+      mode,
+      rules,
+      rulesSummary: rulesSummary(mode, rules),
+      umaOptionLabels: options.map((option) => option.label),
+      umaIndex: umaOptionIndex(mode, rules.uma)
+    });
+  },
+
+  updateRules(patch: Partial<RoomRules>) {
+    const rules = {
+      ...this.data.rules,
+      ...patch
+    };
+    this.setData({
+      rules,
+      rulesSummary: rulesSummary(this.data.mode, rules),
+      umaIndex: umaOptionIndex(this.data.mode, rules.uma)
+    });
+  },
+
+  parseRuleNumber(value: string): number {
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) ? parsed : 0;
   },
 
   async ensureOpenid(): Promise<string> {

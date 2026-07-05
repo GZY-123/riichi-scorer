@@ -1,45 +1,29 @@
-import { avatarFallbackText } from "../../utils/profile";
 import { clearLastRoom } from "../../utils/lastRoom";
+import {
+  GameMode,
+  PlayerState,
+  resolveRules,
+  RoomRules,
+  rulesSummary,
+  SettlementEngineApi,
+  SettlementRow,
+  settleView
+} from "./settlementLogic";
 
-type GameMode = "3p" | "4p";
-type Seat = "east" | "south" | "west" | "north";
+declare const require: (id: string) => unknown;
+
 type RoomStatus = "waiting" | "playing" | "finished";
-
-interface PlayerState {
-  openid: string;
-  nickName: string;
-  avatarFileId?: string;
-  seat: Seat;
-  score: number;
-}
 
 interface RoomDocument {
   roomCode: string;
   mode: GameMode;
+  rules?: RoomRules;
   status: RoomStatus;
   players: PlayerState[];
+  round?: {
+    riichiSticks?: number;
+  };
 }
-
-interface Ranking {
-  openid: string;
-  rank: number;
-  nickName: string;
-  avatarFileId?: string;
-  avatarText: string;
-  seatText: string;
-  rawScore: number;
-  finalScore: number;
-  finalScoreText: string;
-  scoreClass: "score-positive" | "score-negative" | "score-neutral";
-  rankClass: "rank-1" | "rank-2" | "rank-3" | "";
-}
-
-const SEAT_TEXT: Record<Seat, string> = {
-  east: "东",
-  south: "南",
-  west: "西",
-  north: "北"
-};
 
 const STATUS_TEXT: Record<RoomStatus, string> = {
   waiting: "等待中",
@@ -47,12 +31,16 @@ const STATUS_TEXT: Record<RoomStatus, string> = {
   finished: "已结算"
 };
 
+const engine = require("../../utils/engine-lib/index.js") as SettlementEngineApi;
+
 Page({
   data: {
     roomId: "",
     roomCode: "",
     statusText: "等待中",
-    rankings: [] as Ranking[]
+    rulesText: "半庄 · 马10-20",
+    isEstimate: false,
+    rankings: [] as SettlementRow[]
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -80,35 +68,55 @@ Page({
         return;
       }
 
-      const baseScore = response.data.mode === "3p" ? 35000 : 25000;
-      const rankings = [...response.data.players]
-        .sort((left, right) => right.score - left.score)
-        .map((player, index) => {
-          const finalScore = player.score - baseScore;
-          return {
-            openid: player.openid,
-            rank: index + 1,
-            nickName: player.nickName,
-            avatarFileId: player.avatarFileId,
-            avatarText: avatarFallbackText(player.nickName),
-            seatText: SEAT_TEXT[player.seat],
-            rawScore: player.score,
-            finalScore,
-            finalScoreText: `${finalScore > 0 ? "+" : ""}${finalScore}`,
-            scoreClass: this.scoreClass(finalScore),
-            rankClass: this.rankClass(index + 1)
-          };
-        });
-
+      const rules = resolveRules(response.data);
+      // 头信息先渲染，精算失败也不影响页面骨架
       this.setData({
         roomCode: response.data.roomCode,
         statusText: STATUS_TEXT[response.data.status],
-        rankings
+        rulesText: rulesSummary(response.data.mode, rules),
+        isEstimate: response.data.status !== "finished"
       });
+
+      const expected = response.data.mode === "3p" ? 3 : 4;
+      if (response.data.players.length !== expected) {
+        // 人未满（等待中）：引擎精算要求满员，回退为素点排序
+        this.setData({ rankings: this.rawRankings(response.data.players) });
+        return;
+      }
+
+      const rankings = settleView({
+        players: response.data.players,
+        mode: response.data.mode,
+        rules,
+        riichiSticks: response.data.round?.riichiSticks ?? 0,
+        engine
+      });
+      this.setData({ rankings });
     } catch (error) {
       const message = error instanceof Error ? error.message : "读取结算失败";
       wx.showToast({ title: message, icon: "none" });
     }
+  },
+
+  rawRankings(players: PlayerState[]): SettlementRow[] {
+    const seatOrder: Record<string, number> = { east: 0, south: 1, west: 2, north: 3 };
+    const seatText: Record<string, string> = { east: "东", south: "南", west: "西", north: "北" };
+    return [...players]
+      .sort((a, b) => b.score - a.score || (seatOrder[a.seat] ?? 9) - (seatOrder[b.seat] ?? 9))
+      .map((player, index) => ({
+        openid: player.openid,
+        rank: index + 1,
+        nickName: player.nickName,
+        ...(player.avatarFileId ? { avatarFileId: player.avatarFileId } : {}),
+        avatarText: player.nickName.slice(0, 1),
+        seatText: seatText[player.seat] ?? "",
+        rawScore: player.score,
+        adjustedScore: player.score,
+        finalScore: 0,
+        finalScoreText: "—",
+        scoreClass: "score-neutral" as const,
+        rankClass: index === 0 ? ("rank-1" as const) : index === 1 ? ("rank-2" as const) : index === 2 ? ("rank-3" as const) : ("" as const)
+      }));
   },
 
   onReturnHomeTap() {
@@ -122,19 +130,6 @@ Page({
     wx.navigateTo({
       url: `/pages/history-detail/history-detail?roomId=${this.data.roomId}`
     });
-  },
-
-  scoreClass(score: number): "score-positive" | "score-negative" | "score-neutral" {
-    if (score > 0) return "score-positive";
-    if (score < 0) return "score-negative";
-    return "score-neutral";
-  },
-
-  rankClass(rank: number): "rank-1" | "rank-2" | "rank-3" | "" {
-    if (rank === 1) return "rank-1";
-    if (rank === 2) return "rank-2";
-    if (rank === 3) return "rank-3";
-    return "";
   }
 });
 
