@@ -1,9 +1,14 @@
 {
  "images": [
   {
-   "filename": "2p.png",
+   "filename": "tile_2p@2x.png",
    "idiom": "universal",
    "scale": "2x"
+  },
+  {
+   "filename": "tile_2p@3x.png",
+   "idiom": "universal",
+   "scale": "3x"
   }
  ],
  "info": {
