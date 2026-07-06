@@ -15,7 +15,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            PlaceholderView(title: "算点", note: EngineBridge.shared.smokeTest())
+            ScoreCameraView()
                 .tabItem { Label("算点", systemImage: "camera.viewfinder") }
                 .tag(0)
 

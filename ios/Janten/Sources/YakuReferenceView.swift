@@ -24,9 +24,9 @@ struct YakuReferenceView: View {
                                 Section(group) {
                                     ForEach(items) { item in
                                         YakuRow(item: item)
+                                            .id(item.id)
                                     }
                                 }
-                                .id(group)
                             }
                         }
                     }
@@ -47,8 +47,10 @@ struct YakuReferenceView: View {
                 ForEach(YakuData.groups, id: \.self) { group in
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            proxy.scrollTo(group, anchor: .top)
+                        if let first = filteredItems.first(where: { $0.group == group }) {
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                proxy.scrollTo(first.id, anchor: .top)
+                            }
                         }
                     } label: {
                         Text(group)

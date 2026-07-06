@@ -59,6 +59,73 @@ final class EngineBridge {
         }
     }
 
+    func scoreHand(_ input: ScoreHandInput) throws -> ScoreCalculationResult {
+        let parseInput: [String: Any] = [
+            "mode": input.mode.rawValue,
+            "tiles": input.tiles,
+            "winningTile": input.winningTile,
+            "melds": []
+        ]
+        let divisions = try invoke("parseHand", [parseInput])
+        let context: [String: Any] = [
+            "mode": input.mode.rawValue,
+            "winType": input.winType.rawValue,
+            "seatWind": input.seatWind.rawValue,
+            "prevalentWind": input.prevalentWind.rawValue,
+            "riichi": input.riichi,
+            "doubleRiichi": input.doubleRiichi,
+            "ippatsu": input.ippatsu,
+            "doraIndicators": input.doraIndicators,
+            "uraDoraIndicators": [],
+            "redDora": true,
+            "nukiDora": input.nukiDora
+        ]
+
+        let yakuValue = try invoke("detectYaku", [divisions, context])
+        let yakuDictionary = try dictionary(from: yakuValue, function: "detectYaku")
+        let yakuman = intValue(yakuDictionary["yakuman"])
+        let hasYaku = boolValue(yakuDictionary["hasYaku"])
+        if !hasYaku && yakuman <= 0 {
+            throw ScoreCalculationError.noYaku
+        }
+
+        let fuValue = try invoke("calcFu", [divisions, context])
+        let fuDictionary = try dictionary(from: fuValue, function: "calcFu")
+        let fu = intValue(fuDictionary["fu"])
+        let han = intValue(yakuDictionary["han"])
+
+        let scoreInput: [String: Any] = [
+            "han": han,
+            "fu": fu,
+            "yakuman": yakuman,
+            "isDealer": input.isDealer,
+            "winType": input.winType.rawValue,
+            "mode": input.mode.rawValue,
+            "honba": input.honba,
+            "riichiSticks": 0,
+            "kiriageMangan": false
+        ]
+        let scoreValue = try invoke("calcScore", [scoreInput])
+        let scoreDictionary = try dictionary(from: scoreValue, function: "calcScore")
+
+        return ScoreCalculationResult(
+            tiles: input.tiles,
+            winningTile: input.winningTile,
+            winningTileIndex: input.winningTileIndex,
+            mode: input.mode,
+            winType: input.winType,
+            isDealer: input.isDealer,
+            han: intValue(scoreDictionary["han"]),
+            fu: intValue(scoreDictionary["fu"]),
+            yakuman: intValue(scoreDictionary["yakuman"]),
+            limit: stringValue(scoreDictionary["limit"]) ?? "none",
+            yaku: parseYaku(yakuDictionary["yaku"]),
+            ron: intValueOrNil(scoreDictionary["ron"]),
+            tsumo: parseTsumo(scoreDictionary["tsumo"]),
+            total: intValue(scoreDictionary["total"])
+        )
+    }
+
     func smokeTest() -> String {
         guard let result = call("calcScore", [["han": 4, "fu": 30, "winType": "ron", "isDealer": false]]),
               let ron = result.objectForKeyedSubscript("ron")?.toNumber() else {
@@ -96,10 +163,210 @@ final class EngineBridge {
         }
         return exceptionStore.message
     }
+
+    private func dictionary(from value: JSValue, function: String) throws -> [String: Any] {
+        guard let raw = value.toDictionary() else {
+            throw EngineBridgeError.unexpectedReturn(function)
+        }
+        return raw.reduce(into: [:]) { result, pair in
+            guard let key = pair.key as? String else {
+                return
+            }
+            result[key] = pair.value
+        }
+    }
+
+    private func parseYaku(_ value: Any?) -> [ScoreYaku] {
+        let items: [[String: Any]]
+        if let direct = value as? [[String: Any]] {
+            items = direct
+        } else if let raw = value as? [[AnyHashable: Any]] {
+            items = raw.map { dictionary in
+                dictionary.reduce(into: [:]) { result, pair in
+                    guard let key = pair.key as? String else {
+                        return
+                    }
+                    result[key] = pair.value
+                }
+            }
+        } else {
+            items = []
+        }
+
+        return items.map { item in
+            ScoreYaku(
+                id: stringValue(item["id"]) ?? UUID().uuidString,
+                name: stringValue(item["name"]) ?? "役种",
+                han: intValueOrNil(item["han"]),
+                yakuman: intValueOrNil(item["yakuman"]),
+                isYakuman: boolValue(item["isYakuman"]),
+                isDora: boolValue(item["isDora"])
+            )
+        }
+    }
+
+    private func parseTsumo(_ value: Any?) -> ScoreTsumoPayments? {
+        let dictionary: [String: Any]?
+        if let direct = value as? [String: Any] {
+            dictionary = direct
+        } else if let raw = value as? [AnyHashable: Any] {
+            dictionary = raw.reduce(into: [:]) { result, pair in
+                guard let key = pair.key as? String else {
+                    return
+                }
+                result[key] = pair.value
+            }
+        } else {
+            dictionary = nil
+        }
+        guard let dictionary else {
+            return nil
+        }
+        return ScoreTsumoPayments(
+            dealer: intValueOrNil(dictionary["dealer"]),
+            nonDealer: intValueOrNil(dictionary["nonDealer"]),
+            all: intValueOrNil(dictionary["all"]),
+            total: intValue(dictionary["total"])
+        )
+    }
+
+    private func intValue(_ value: Any?) -> Int {
+        intValueOrNil(value) ?? 0
+    }
+
+    private func intValueOrNil(_ value: Any?) -> Int? {
+        if let number = value as? NSNumber {
+            return number.intValue
+        }
+        if let int = value as? Int {
+            return int
+        }
+        if let double = value as? Double {
+            return Int(double)
+        }
+        if let string = value as? String {
+            return Int(string)
+        }
+        return nil
+    }
+
+    private func boolValue(_ value: Any?) -> Bool {
+        if let bool = value as? Bool {
+            return bool
+        }
+        if let number = value as? NSNumber {
+            return number.boolValue
+        }
+        return false
+    }
+
+    private func stringValue(_ value: Any?) -> String? {
+        if let string = value as? String {
+            return string
+        }
+        if let number = value as? NSNumber {
+            return number.stringValue
+        }
+        return nil
+    }
 }
 
 struct ParsedHandDivision: Equatable {
     let pattern: String
+}
+
+struct ScoreHandInput {
+    let tiles: [String]
+    let winningTile: String
+    let winningTileIndex: Int
+    let mode: GameMode
+    let winType: ScoreWinType
+    let isDealer: Bool
+    let seatWind: SeatWind
+    let prevalentWind: SeatWind
+    let riichi: Bool
+    let doubleRiichi: Bool
+    let ippatsu: Bool
+    let doraIndicators: [String]
+    let honba: Int
+    let nukiDora: Int
+}
+
+enum ScoreWinType: String, CaseIterable, Identifiable {
+    case ron
+    case tsumo
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .ron: return "荣和"
+        case .tsumo: return "自摸"
+        }
+    }
+}
+
+enum SeatWind: String, CaseIterable, Identifiable {
+    case east
+    case south
+    case west
+    case north
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .east: return "东"
+        case .south: return "南"
+        case .west: return "西"
+        case .north: return "北"
+        }
+    }
+}
+
+struct ScoreYaku: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let han: Int?
+    let yakuman: Int?
+    let isYakuman: Bool
+    let isDora: Bool
+}
+
+struct ScoreTsumoPayments: Equatable {
+    let dealer: Int?
+    let nonDealer: Int?
+    let all: Int?
+    let total: Int
+}
+
+struct ScoreCalculationResult: Identifiable, Equatable {
+    let id = UUID()
+    let tiles: [String]
+    let winningTile: String
+    let winningTileIndex: Int
+    let mode: GameMode
+    let winType: ScoreWinType
+    let isDealer: Bool
+    let han: Int
+    let fu: Int
+    let yakuman: Int
+    let limit: String
+    let yaku: [ScoreYaku]
+    let ron: Int?
+    let tsumo: ScoreTsumoPayments?
+    let total: Int
+}
+
+enum ScoreCalculationError: LocalizedError {
+    case noYaku
+
+    var errorDescription: String? {
+        switch self {
+        case .noYaku:
+            return "没有役，不能和牌"
+        }
+    }
 }
 
 enum EngineBridgeError: LocalizedError {
