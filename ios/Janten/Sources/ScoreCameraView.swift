@@ -72,6 +72,9 @@ struct ScoreCameraView: View {
             }
             .onAppear(perform: loadPrefillIfNeeded)
             .onChange(of: photoItem) { _, newItem in
+                if newItem != nil {
+                    Haptics.tap()
+                }
                 loadPhotoItem(newItem)
             }
             .onChange(of: isDealer) { _, newValue in
@@ -126,9 +129,6 @@ struct ScoreCameraView: View {
 
                 PhotosPicker(selection: $photoItem, matching: .images) {
                     actionLabel(title: "从相册选择", systemImage: "photo.on.rectangle", disabled: false)
-                        .simultaneousGesture(TapGesture().onEnded {
-                            Haptics.tap()
-                        })
                 }
                 .buttonStyle(.plain)
             }

@@ -85,9 +85,6 @@ struct ScoreboardView: View {
                             GameListCard(game: game, isOngoing: true)
                         }
                         .buttonStyle(.plain)
-                        .simultaneousGesture(TapGesture().onEnded {
-                            Haptics.tap()
-                        })
                     }
                 }
             }
@@ -105,9 +102,6 @@ struct ScoreboardView: View {
                             GameListCard(game: game, isOngoing: false)
                         }
                         .buttonStyle(.plain)
-                        .simultaneousGesture(TapGesture().onEnded {
-                            Haptics.tap()
-                        })
                     }
                 }
             }
