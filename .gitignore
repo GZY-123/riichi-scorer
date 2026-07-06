@@ -11,3 +11,4 @@ pnpm-debug.log*
 project.private.config.json
 cloudfunctions/**/node_modules/
 cloudfunctions/**/dist/
+ios/Janten.xcodeproj/
