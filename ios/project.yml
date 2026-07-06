@@ -6,7 +6,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: 4U65SMBZNX
     CODE_SIGN_STYLE: Automatic
     INFOPLIST_KEY_NSCameraUsageDescription: 用于拍摄麻将牌面进行识别算点
     INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 用于从相册选择牌面照片进行识别

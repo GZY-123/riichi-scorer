@@ -580,7 +580,8 @@ struct ScoreCameraView: View {
                 winningIndex = currentWinning - 1
             }
         }
-        cursorIndex = min(index, handTiles.count)
+        // 删除后退格键回到队尾（光标默认位），而不是停在删除位
+        cursorIndex = handTiles.count
         editingIndex = nil
     }
 
