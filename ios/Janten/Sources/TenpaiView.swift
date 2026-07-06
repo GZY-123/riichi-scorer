@@ -2,7 +2,11 @@ import SwiftUI
 
 struct TenpaiView: View {
     @State private var mode: GameMode = .fourPlayer
-    @State private var handTiles: [HandTile] = []
+    @State private var handTiles: [HandTile] = {
+        // 测试钩子：-tenpaiPrefill "1m 2m 3m" 预填手牌
+        let prefill = UserDefaults.standard.string(forKey: "tenpaiPrefill") ?? ""
+        return prefill.split(separator: " ").map { HandTile(code: String($0)) }
+    }()
     @State private var result: TenpaiResult?
 
     private var tileCodes: [String] {
@@ -31,6 +35,9 @@ struct TenpaiView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("听牌")
+            .onAppear {
+                recalculateIfReady()
+            }
             .onChange(of: tileCodes) { _, _ in
                 recalculateIfReady()
             }
@@ -81,16 +88,14 @@ struct TenpaiView: View {
                         )
                 }
             } else {
-                ForEach(handTiles.indices, id: \.self) { index in
-                    let tile = handTiles[index]
+                ForEach(handTiles) { tile in
                     Button {
-                        removeTile(at: index)
+                        removeTile(tile)
                     } label: {
                         TileImageView(code: tile.code, size: 42)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .transition(.scale(scale: 0.85).combined(with: .opacity))
                 }
             }
         }
@@ -106,12 +111,9 @@ struct TenpaiView: View {
         }
     }
 
-    private func removeTile(at index: Int) {
-        guard handTiles.indices.contains(index) else {
-            return
-        }
+    private func removeTile(_ tile: HandTile) {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-            _ = handTiles.remove(at: index)
+            handTiles.removeAll { $0.id == tile.id }
         }
     }
 
