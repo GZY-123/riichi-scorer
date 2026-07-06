@@ -208,9 +208,15 @@ struct ScoreCameraView: View {
             }
 
             HStack(spacing: 10) {
-                Button("理牌", action: sortHand)
+                Button("理牌") {
+                    Haptics.press()
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) { sortHand() }
+                }
                     .disabled(handTiles.isEmpty)
-                Button("清空", action: clearHand)
+                Button("清空") {
+                    Haptics.press()
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) { clearHand() }
+                }
                     .disabled(handTiles.isEmpty)
                 if let editingIndex, handTiles.indices.contains(editingIndex) {
                     Button("设为和牌张") {
@@ -236,7 +242,7 @@ struct ScoreCameraView: View {
 
     private var handGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 9) {
-            ForEach(Array(handTiles.indices), id: \.self) { index in
+            ForEach(Array(handTiles.enumerated()), id: \.element.id) { index, _ in
                 handTileButton(index)
 
                 if shouldShowInlineDelete(after: index) {
@@ -388,7 +394,7 @@ struct ScoreCameraView: View {
                 } label: {
                     Image(systemName: editingDora ? "chevron.up" : "plus")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.felt)
+                        .foregroundStyle(Color.accentBrand)
                         .frame(width: 34, height: 30)
                         .background(Color.backgroundSecondary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }

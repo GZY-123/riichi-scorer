@@ -31,6 +31,11 @@ extension Color {
         dynamic(light: UIColor(hex: 0x66756F), dark: UIColor(hex: 0xD9D0BC))
     }
 
+    /// 品牌强调文字色：浅色=毡绿，深色=亮薄荷绿（毡绿底上可读）
+    static var accentBrand: Color {
+        dynamic(light: UIColor(hex: 0x0F5342), dark: UIColor(hex: 0x6FD7AC))
+    }
+
     static var hairline: Color {
         dynamic(light: UIColor(hex: 0xD9D0BC), dark: UIColor(hex: 0x2B6E5A))
     }

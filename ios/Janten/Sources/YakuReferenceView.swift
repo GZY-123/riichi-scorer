@@ -55,7 +55,7 @@ struct YakuReferenceView: View {
                     } label: {
                         Text(group)
                             .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .foregroundStyle(Color.felt)
+                            .foregroundStyle(Color.accentBrand)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(Color.backgroundSecondary, in: Capsule())
@@ -93,7 +93,7 @@ private struct YakuRow: View {
                 Text(item.han)
                     .font(.system(.subheadline, design: .rounded).weight(.bold))
                     .monospacedDigit()
-                    .foregroundStyle(Color.felt)
+                    .foregroundStyle(Color.accentBrand)
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
 
