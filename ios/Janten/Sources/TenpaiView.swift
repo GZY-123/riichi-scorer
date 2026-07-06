@@ -67,37 +67,34 @@ struct TenpaiView: View {
         .jantenCard()
     }
 
+    // 手牌换行网格：7 列自适应，13 张两行放下，不再横向滚动
     private var handStrip: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                if handTiles.isEmpty {
-                    ForEach(0..<13, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(Color.backgroundSecondary.opacity(0.45))
-                            .frame(width: 34, height: 46)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .stroke(Color.hairline, lineWidth: 0.8)
-                            )
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+            if handTiles.isEmpty {
+                ForEach(0..<13, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.backgroundSecondary.opacity(0.45))
+                        .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(Color.hairline, lineWidth: 0.8)
+                        )
+                }
+            } else {
+                ForEach(handTiles.indices, id: \.self) { index in
+                    let tile = handTiles[index]
+                    Button {
+                        removeTile(at: index)
+                    } label: {
+                        TileImageView(code: tile.code, size: 42)
+                            .contentShape(Rectangle())
                     }
-                } else {
-                    ForEach(handTiles.indices, id: \.self) { index in
-                        let tile = handTiles[index]
-                        Button {
-                            removeTile(at: index)
-                        } label: {
-                            TileImageView(code: tile.code, size: 36)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.scale(scale: 0.85).combined(with: .opacity))
-                    }
+                    .buttonStyle(.plain)
+                    .transition(.scale(scale: 0.85).combined(with: .opacity))
                 }
             }
-            .padding(.vertical, 4)
         }
-        .scrollIndicators(.hidden)
-        .frame(minHeight: 58)
+        .padding(.vertical, 4)
     }
 
     private func appendTile(_ code: String) {

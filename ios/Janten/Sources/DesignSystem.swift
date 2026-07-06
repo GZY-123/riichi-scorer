@@ -121,53 +121,58 @@ struct TileKeyboardView: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(rows.indices, id: \.self) { index in
-                let row = rows[index]
-                keyboardRow(title: row.title, tiles: row.tiles)
-            }
-            HStack(spacing: 10) {
-                Text("赤")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(Color.textSecondary)
-                    .frame(width: 24, alignment: .leading)
-
-                ForEach(["0m", "0p", "0s"], id: \.self) { code in
-                    tileKey(code)
+        // 9 键按可用宽度均分，整行铺开不滚动
+        GeometryReader { geo in
+            let keySize = max(28, (geo.size.width - 24 - 10 - 8 * 6) / 9)
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(rows.indices, id: \.self) { index in
+                    let row = rows[index]
+                    keyboardRow(title: row.title, tiles: row.tiles, keySize: keySize)
                 }
+                HStack(spacing: 6) {
+                    Text("赤")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(width: 24, alignment: .leading)
 
-                deleteKey
-                Spacer(minLength: 0)
+                    ForEach(["0m", "0p", "0s"], id: \.self) { code in
+                        tileKey(code, keySize: keySize)
+                    }
+
+                    deleteKey
+                    Spacer(minLength: 0)
+                }
             }
         }
+        .frame(height: keyboardHeight)
     }
 
-    private func keyboardRow(title: String, tiles: [String]) -> some View {
-        HStack(spacing: 10) {
+    // 5 行键盘的固定总高：按标准屏宽的键高估算，避免 GeometryReader 撑坏父布局
+    private var keyboardHeight: CGFloat {
+        let keySize = max(28, (UIScreen.main.bounds.width - 48 - 24 - 10 - 8 * 6) / 9)
+        return keySize * 4 / 3 * 5 + 10 * 4
+    }
+
+    private func keyboardRow(title: String, tiles: [String], keySize: CGFloat) -> some View {
+        HStack(spacing: 6) {
             Text(title)
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
                 .foregroundStyle(Color.textSecondary)
                 .frame(width: 24, alignment: .leading)
 
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(tiles, id: \.self) { code in
-                        tileKey(code)
-                    }
-                }
-                .padding(.vertical, 2)
+            ForEach(tiles, id: \.self) { code in
+                tileKey(code, keySize: keySize)
             }
-            .scrollIndicators(.hidden)
+            Spacer(minLength: 0)
         }
     }
 
-    private func tileKey(_ code: String) -> some View {
+    private func tileKey(_ code: String, keySize: CGFloat) -> some View {
         Button {
             impact()
             onTap(code)
         } label: {
-            TileImageView(code: code, size: 30)
-                .frame(minWidth: 44, minHeight: 44)
+            TileImageView(code: code, size: keySize)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
