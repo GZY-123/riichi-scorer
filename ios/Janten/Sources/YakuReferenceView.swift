@@ -13,24 +13,59 @@ struct YakuReferenceView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(YakuData.groups, id: \.self) { group in
-                    let items = filteredItems.filter { $0.group == group }
-                    if !items.isEmpty {
-                        Section(group) {
-                            ForEach(items) { item in
-                                YakuRow(item: item)
+            ScrollViewReader { proxy in
+                VStack(spacing: 0) {
+                    groupIndexBar(proxy: proxy)
+
+                    List {
+                        ForEach(YakuData.groups, id: \.self) { group in
+                            let items = filteredItems.filter { $0.group == group }
+                            if !items.isEmpty {
+                                Section(group) {
+                                    ForEach(items) { item in
+                                        YakuRow(item: item)
+                                    }
+                                }
+                                .id(group)
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
                 }
+                .background(Color.backgroundPrimary)
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(Color.backgroundPrimary)
             .navigationTitle("役种")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索役种")
         }
+    }
+
+    /// 番数快速索引：点击滚动到对应分组
+    private func groupIndexBar(proxy: ScrollViewProxy) -> some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(YakuData.groups, id: \.self) { group in
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            proxy.scrollTo(group, anchor: .top)
+                        }
+                    } label: {
+                        Text(group)
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .foregroundStyle(Color.felt)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(Color.backgroundSecondary, in: Capsule())
+                            .overlay(Capsule().stroke(Color.hairline, lineWidth: 0.8))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .scrollIndicators(.hidden)
     }
 }
 
