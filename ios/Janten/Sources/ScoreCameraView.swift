@@ -75,14 +75,36 @@ struct ScoreCameraView: View {
                 loadPhotoItem(newItem)
             }
             .onChange(of: isDealer) { _, newValue in
+                Haptics.tap()
                 if newValue {
                     seatWind = .east
                 }
             }
             .onChange(of: mode) { _, newValue in
+                Haptics.tap()
                 if newValue == .fourPlayer {
                     nukiDora = 0
                 }
+            }
+            .onChange(of: winType) { _, _ in
+                Haptics.tap()
+            }
+            .onChange(of: prevalentWind) { _, _ in
+                Haptics.tap()
+            }
+            .onChange(of: seatWind) { _, _ in
+                if !isDealer {
+                    Haptics.tap()
+                }
+            }
+            .onChange(of: riichi) { _, _ in
+                Haptics.tap()
+            }
+            .onChange(of: doubleRiichi) { _, _ in
+                Haptics.tap()
+            }
+            .onChange(of: ippatsu) { _, _ in
+                Haptics.tap()
             }
         }
     }
@@ -94,6 +116,7 @@ struct ScoreCameraView: View {
                     guard cameraAvailable else {
                         return
                     }
+                    Haptics.tap()
                     showsCamera = true
                 } label: {
                     actionLabel(title: "拍照", systemImage: "camera", disabled: !cameraAvailable)
@@ -103,6 +126,9 @@ struct ScoreCameraView: View {
 
                 PhotosPicker(selection: $photoItem, matching: .images) {
                     actionLabel(title: "从相册选择", systemImage: "photo.on.rectangle", disabled: false)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            Haptics.tap()
+                        })
                 }
                 .buttonStyle(.plain)
             }
@@ -234,6 +260,7 @@ struct ScoreCameraView: View {
 
     private func handTileButton(_ index: Int) -> some View {
         Button {
+            Haptics.tap()
             editingIndex = index
             cursorIndex = index + 1
         } label: {
@@ -253,6 +280,7 @@ struct ScoreCameraView: View {
 
     private var inlineDeleteKey: some View {
         Button {
+            Haptics.tap()
             deleteBeforeCursor()
         } label: {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -353,6 +381,7 @@ struct ScoreCameraView: View {
                 Spacer()
 
                 Button {
+                    Haptics.tap()
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
                         editingDora.toggle()
                     }
@@ -424,6 +453,7 @@ struct ScoreCameraView: View {
                       let image = UIImage(data: data) else {
                     await MainActor.run {
                         detectionMessage = "图片无法读取，请换一张照片"
+                        Haptics.warning()
                     }
                     return
                 }
@@ -433,6 +463,7 @@ struct ScoreCameraView: View {
             } catch {
                 await MainActor.run {
                     detectionMessage = friendlyMessage(for: error)
+                    Haptics.warning()
                 }
             }
         }
@@ -463,6 +494,7 @@ struct ScoreCameraView: View {
                     isDetecting = false
                     detections = []
                     detectionMessage = friendlyMessage(for: error)
+                    Haptics.warning()
                     applyDetectedTiles([])
                 }
             }
@@ -589,12 +621,14 @@ struct ScoreCameraView: View {
         guard handTiles.indices.contains(index) else {
             return
         }
+        Haptics.tap()
         winningIndex = index
         editingIndex = index
         cursorIndex = index + 1
     }
 
     private func sortHand() {
+        Haptics.tap()
         let winningID = winningIndex.flatMap { index in
             handTiles.indices.contains(index) ? handTiles[index].id : nil
         }
@@ -611,6 +645,7 @@ struct ScoreCameraView: View {
     }
 
     private func clearHand() {
+        Haptics.press()
         withAnimation(.spring(response: 0.26, dampingFraction: 0.86)) {
             handTiles = []
             winningIndex = nil
@@ -630,21 +665,25 @@ struct ScoreCameraView: View {
     }
 
     private func removeDora(_ tile: DoraIndicatorTile) {
+        Haptics.tap()
         withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
             doraIndicators.removeAll { $0.id == tile.id }
         }
     }
 
     private func calculateScore() {
+        Haptics.press()
         scoreError = nil
         let tiles = handTiles.map(\.code)
         guard tiles.count == 14 else {
             scoreError = "请先输入 14 张牌"
+            Haptics.warning()
             return
         }
         let resolvedWinningIndex = winningIndex ?? tiles.indices.last
         guard let resolvedWinningIndex, tiles.indices.contains(resolvedWinningIndex) else {
             scoreError = "请先指定和牌张"
+            Haptics.warning()
             return
         }
 
@@ -669,6 +708,7 @@ struct ScoreCameraView: View {
             result = try EngineBridge.shared.scoreHand(input)
         } catch {
             scoreError = friendlyMessage(for: error)
+            Haptics.warning()
         }
     }
 

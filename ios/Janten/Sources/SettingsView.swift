@@ -65,6 +65,9 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .onChange(of: appearance) { _, _ in
+                Haptics.tap()
+            }
         }
         .jantenCard()
     }
@@ -84,6 +87,9 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: defaultGameMode) { _, _ in
+                    Haptics.tap()
+                }
             }
 
             Toggle(isOn: $hapticsEnabled) {
@@ -92,6 +98,9 @@ struct SettingsView: View {
                     .foregroundStyle(Color.textPrimary)
             }
             .tint(Color.feltBright)
+            .onChange(of: hapticsEnabled) { _, _ in
+                Haptics.tap()
+            }
         }
         .jantenCard()
     }

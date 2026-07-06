@@ -43,6 +43,7 @@ struct TenpaiView: View {
                 recalculateIfReady()
             }
             .onChange(of: mode) { _, _ in
+                Haptics.tap()
                 recalculateIfReady()
             }
         }
@@ -108,6 +109,7 @@ struct TenpaiView: View {
 
     private var inlineDeleteKey: some View {
         Button {
+            Haptics.tap()
             deleteLastTile()
         } label: {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -138,6 +140,7 @@ struct TenpaiView: View {
     }
 
     private func removeTile(_ tile: HandTile) {
+        Haptics.tap()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
             handTiles.removeAll { $0.id == tile.id }
         }

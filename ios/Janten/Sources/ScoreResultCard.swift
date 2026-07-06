@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct ScoreResultCard: View {
     let result: ScoreCalculationResult
@@ -25,7 +24,7 @@ struct ScoreResultCard: View {
         .scaleEffect(appeared ? 1 : 0.94)
         .opacity(appeared ? 1 : 0)
         .onAppear {
-            Haptics.notification(.success)
+            Haptics.success()
             withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
                 appeared = true
             }
@@ -129,6 +128,7 @@ struct ScoreResultCard: View {
 
     private var closeButton: some View {
         Button {
+            Haptics.tap()
             withAnimation(.spring(response: 0.26, dampingFraction: 0.86)) {
                 appeared = false
             }

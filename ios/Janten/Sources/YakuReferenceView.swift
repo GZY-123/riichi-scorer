@@ -46,7 +46,7 @@ struct YakuReferenceView: View {
             HStack(spacing: 8) {
                 ForEach(YakuData.groups, id: \.self) { group in
                     Button {
-                        Haptics.impact()
+                        Haptics.tap()
                         if let first = filteredItems.first(where: { $0.group == group }) {
                             withAnimation(.easeOut(duration: 0.25)) {
                                 proxy.scrollTo(first.id, anchor: .top)

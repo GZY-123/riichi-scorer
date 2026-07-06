@@ -39,6 +39,9 @@ struct ContentView: View {
                 .tag(4)
         }
         .tint(Color.felt)
+        .onChange(of: selection) { _, _ in
+            Haptics.tap()
+        }
     }
 
     private static func initialSelection() -> Int {

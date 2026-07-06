@@ -311,7 +311,7 @@ final class GameStore: ObservableObject {
             )
             return id
         } catch {
-            errorMessage = error.localizedDescription
+            reportError(error.localizedDescription)
             return nil
         }
     }
@@ -328,7 +328,7 @@ final class GameStore: ObservableObject {
             decoder.dateDecodingStrategy = .iso8601
             games = try decoder.decode([LocalGame].self, from: data)
         } catch {
-            errorMessage = "记分簿读取失败：\(error.localizedDescription)"
+            reportError("记分簿读取失败：\(error.localizedDescription)")
             games = []
         }
     }
@@ -341,8 +341,13 @@ final class GameStore: ObservableObject {
             let data = try encoder.encode(games)
             try data.write(to: fileURL, options: [.atomic])
         } catch {
-            errorMessage = "记分簿保存失败：\(error.localizedDescription)"
+            reportError("记分簿保存失败：\(error.localizedDescription)")
         }
+    }
+
+    private func reportError(_ message: String) {
+        errorMessage = message
+        Haptics.warning()
     }
 
     private func normalizedPlayers(from names: [String], mode: GameMode) -> [String] {

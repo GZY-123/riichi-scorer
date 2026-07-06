@@ -172,7 +172,7 @@ struct TileKeyboardView: View {
 
     private func tileKey(_ code: String, keySize: CGFloat) -> some View {
         Button {
-            Haptics.impact()
+            Haptics.tap()
             onTap(code)
         } label: {
             TileImageView(code: code, size: keySize)
@@ -184,7 +184,7 @@ struct TileKeyboardView: View {
 
     private var deleteKey: some View {
         Button {
-            Haptics.impact()
+            Haptics.tap()
             onDelete()
         } label: {
             Image(systemName: "delete.left")
@@ -200,31 +200,6 @@ struct TileKeyboardView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("退格")
-    }
-}
-
-enum Haptics {
-    static let enabledKey = "hapticsEnabled"
-
-    static var isEnabled: Bool {
-        if UserDefaults.standard.object(forKey: enabledKey) == nil {
-            return true
-        }
-        return UserDefaults.standard.bool(forKey: enabledKey)
-    }
-
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
-        guard isEnabled else {
-            return
-        }
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
-    }
-
-    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        guard isEnabled else {
-            return
-        }
-        UINotificationFeedbackGenerator().notificationOccurred(type)
     }
 }
 

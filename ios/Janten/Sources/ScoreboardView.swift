@@ -31,6 +31,7 @@ struct ScoreboardView: View {
             }
             .alert("提示", isPresented: errorBinding) {
                 Button("好", role: .cancel) {
+                    Haptics.tap()
                     store.errorMessage = nil
                 }
             } message: {
@@ -56,7 +57,7 @@ struct ScoreboardView: View {
                 Spacer()
 
                 Button {
-                    Haptics.impact()
+                    Haptics.press()
                     showsNewGame = true
                 } label: {
                     Label("新对局", systemImage: "plus")
@@ -78,16 +79,19 @@ struct ScoreboardView: View {
 
             if store.ongoingGames.isEmpty {
                 EmptyStateRow(text: "暂无进行中的对局")
-            } else {
-                ForEach(store.ongoingGames) { game in
-                    NavigationLink(value: ScoreboardRoute(gameID: game.id, readOnly: false)) {
-                        GameListCard(game: game, isOngoing: true)
+                } else {
+                    ForEach(store.ongoingGames) { game in
+                        NavigationLink(value: ScoreboardRoute(gameID: game.id, readOnly: false)) {
+                            GameListCard(game: game, isOngoing: true)
+                        }
+                        .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            Haptics.tap()
+                        })
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
-    }
 
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -95,16 +99,19 @@ struct ScoreboardView: View {
 
             if store.historyGames.isEmpty {
                 EmptyStateRow(text: "终局后会出现在这里")
-            } else {
-                ForEach(store.historyGames) { game in
-                    NavigationLink(value: ScoreboardRoute(gameID: game.id, readOnly: true)) {
-                        GameListCard(game: game, isOngoing: false)
+                } else {
+                    ForEach(store.historyGames) { game in
+                        NavigationLink(value: ScoreboardRoute(gameID: game.id, readOnly: true)) {
+                            GameListCard(game: game, isOngoing: false)
+                        }
+                        .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            Haptics.tap()
+                        })
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
-    }
 
     private var errorBinding: Binding<Bool> {
         Binding {
@@ -230,6 +237,9 @@ private struct NewGameSheet: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .onChange(of: mode) { _, _ in
+                            Haptics.tap()
+                        }
 
                         Picker("场次", selection: $length) {
                             ForEach(GameLength.allCases) { length in
@@ -237,6 +247,9 @@ private struct NewGameSheet: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .onChange(of: length) { _, _ in
+                            Haptics.tap()
+                        }
                     }
                     .jantenCard()
 
@@ -268,12 +281,14 @@ private struct NewGameSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        Haptics.tap()
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("创建") {
+                        Haptics.press()
                         create()
                     }
                     .font(.headline)
@@ -288,12 +303,12 @@ private struct NewGameSheet: View {
 
     private func create() {
         do {
-            Haptics.impact()
             let gameID = try store.createGame(mode: mode, length: length, playerNames: playerNames)
             dismiss()
             onCreated(gameID)
         } catch {
             store.errorMessage = error.localizedDescription
+            Haptics.warning()
         }
     }
 }
@@ -348,13 +363,13 @@ private struct ScoreboardGameView: View {
                 }
                 .toolbar {
                     if !readOnly && game.status == .playing {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("终局结算") {
-                                Haptics.impact()
-                                showsSettlement = true
-                            }
-                        }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("终局结算") {
+                        Haptics.press()
+                        showsSettlement = true
                     }
+                }
+            }
                 }
                 .sheet(item: $activeSheet) { sheet in
                     switch sheet {
@@ -481,7 +496,7 @@ private struct ScoreboardGameView: View {
 
     private var settlementButton: some View {
         Button {
-            Haptics.impact()
+            Haptics.press()
             showsSettlement = true
         } label: {
             Label("查看终局结算", systemImage: "list.number")
@@ -496,10 +511,8 @@ private struct ScoreboardGameView: View {
 
     private func apply(event: ScoreboardEngineEvent, text: String, roundLabel: String) {
         do {
-            Haptics.impact()
             let newState = try store.applyEvent(gameID: gameID, event: event, text: text, roundLabel: roundLabel)
             if newState.scores.contains(where: { $0 < 0 }) {
-                Haptics.notification(.warning)
                 withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
                     showsBustBanner = true
                 }
@@ -514,15 +527,16 @@ private struct ScoreboardGameView: View {
             }
         } catch {
             store.errorMessage = error.localizedDescription
+            Haptics.warning()
         }
     }
 
     private func undo() {
         do {
-            Haptics.impact()
             try store.undo(gameID: gameID)
         } catch {
             store.errorMessage = error.localizedDescription
+            Haptics.warning()
         }
     }
 }
@@ -610,7 +624,7 @@ private struct ScoreboardActionButton: View {
             guard !disabled else {
                 return
             }
-            Haptics.impact()
+            Haptics.press()
             action()
         } label: {
             Label(title, systemImage: systemImage)
@@ -722,16 +736,21 @@ private struct WinEventSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        Haptics.tap()
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("记录") {
+                        Haptics.press()
                         submit()
                     }
                     .font(.headline)
                 }
+            }
+            .onChange(of: winType) { _, _ in
+                Haptics.tap()
             }
             .onAppear {
                 loser = firstLoser(excluding: winner)
@@ -823,7 +842,7 @@ private struct WinEventSheet: View {
 
     private func optionButton(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button {
-            Haptics.impact()
+            Haptics.tap()
             action()
         } label: {
             Text(title)
@@ -889,6 +908,7 @@ private struct RiichiEventSheet: View {
             List {
                 ForEach(0..<state.playerCount, id: \.self) { index in
                     Button {
+                        Haptics.press()
                         submit(player: index)
                     } label: {
                         HStack {
@@ -911,6 +931,7 @@ private struct RiichiEventSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        Haptics.tap()
                         dismiss()
                     }
                 }
@@ -959,12 +980,14 @@ private struct DrawEventSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
+                        Haptics.tap()
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("记录") {
+                        Haptics.press()
                         submit()
                     }
                     .font(.headline)
@@ -979,6 +1002,7 @@ private struct DrawEventSheet: View {
         } set: { newValue in
             if tenpai.indices.contains(index) {
                 tenpai[index] = newValue
+                Haptics.tap()
             }
         }
     }
@@ -1016,6 +1040,7 @@ private struct SettlementView: View {
 
                         if !readOnly {
                             Button {
+                                Haptics.press()
                                 archiveAndStartNew()
                             } label: {
                                 Label("存档并开新局", systemImage: "plus.circle.fill")
@@ -1042,6 +1067,7 @@ private struct SettlementView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") {
+                        Haptics.tap()
                         dismiss()
                     }
                 }
@@ -1100,6 +1126,7 @@ private struct SettlementView: View {
     private func calculate() {
         guard let game else {
             errorMessage = "找不到这局对局"
+            Haptics.warning()
             return
         }
         do {
@@ -1111,17 +1138,18 @@ private struct SettlementView: View {
             )
         } catch {
             errorMessage = error.localizedDescription
+            Haptics.warning()
         }
     }
 
     private func archiveAndStartNew() {
         do {
-            Haptics.impact()
             let newGameID = try store.archiveAndStartNew(from: gameID)
             dismiss()
             onNewGame(newGameID)
         } catch {
             errorMessage = error.localizedDescription
+            Haptics.warning()
         }
     }
 
