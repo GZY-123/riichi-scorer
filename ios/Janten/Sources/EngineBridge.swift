@@ -134,6 +134,33 @@ final class EngineBridge {
         return "引擎就绪 · 4番30符荣和 = \(ron.intValue) 点"
     }
 
+    func createGame(mode: GameMode, length: GameLength) throws -> EngineGameStateSnapshot {
+        let value = try invoke("createGame", [[
+            "mode": mode.rawValue,
+            "length": length.rawValue
+        ]])
+        return try snapshot(from: value, function: "createGame")
+    }
+
+    func applyEvent(stateJSON: String, event: ScoreboardEngineEvent) throws -> EngineGameStateSnapshot {
+        let stateObject = try jsonObject(from: stateJSON, function: "applyEvent")
+        let value = try invoke("applyEvent", [stateObject, event.payload])
+        return try snapshot(from: value, function: "applyEvent")
+    }
+
+    func settleGame(stateJSON: String, mode: GameMode, returnScore: Int, uma: [Int]) throws -> EngineSettlementResult {
+        let stateObject = try jsonObject(from: stateJSON, function: "settleGame")
+        let value = try invoke("settleGame", [
+            stateObject,
+            [
+                "mode": mode.rawValue,
+                "returnPoints": returnScore,
+                "uma": uma
+            ] as [String: Any]
+        ])
+        return try decode(EngineSettlementResult.self, from: value, function: "settleGame")
+    }
+
     private func invoke(_ function: String, _ arguments: [Any]) throws -> JSValue {
         exceptionStore.message = nil
         context.exception = nil
@@ -174,6 +201,78 @@ final class EngineBridge {
             }
             result[key] = pair.value
         }
+    }
+
+    private func snapshot(from value: JSValue, function: String) throws -> EngineGameStateSnapshot {
+        let object = try jsonCompatibleObject(from: value, function: function)
+        let data = try jsonData(from: object, function: function)
+        let state = try JSONDecoder().decode(EngineGameState.self, from: data)
+        guard let json = String(data: data, encoding: .utf8) else {
+            throw EngineBridgeError.unexpectedReturn(function)
+        }
+        return EngineGameStateSnapshot(json: json, state: state)
+    }
+
+    private func decode<T: Decodable>(_ type: T.Type, from value: JSValue, function: String) throws -> T {
+        let object = try jsonCompatibleObject(from: value, function: function)
+        let data = try jsonData(from: object, function: function)
+        return try JSONDecoder().decode(type, from: data)
+    }
+
+    private func jsonObject(from json: String, function: String) throws -> Any {
+        guard let data = json.data(using: .utf8) else {
+            throw EngineBridgeError.unexpectedReturn(function)
+        }
+        return try JSONSerialization.jsonObject(with: data)
+    }
+
+    private func jsonCompatibleObject(from value: JSValue, function: String) throws -> Any {
+        let raw = value.toObject() as Any
+        let object = jsonCompatible(raw)
+        guard JSONSerialization.isValidJSONObject(object) else {
+            throw EngineBridgeError.unexpectedReturn(function)
+        }
+        return object
+    }
+
+    private func jsonData(from object: Any, function: String) throws -> Data {
+        do {
+            return try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+        } catch {
+            throw EngineBridgeError.unexpectedReturn(function)
+        }
+    }
+
+    private func jsonCompatible(_ value: Any) -> Any {
+        if value is NSNull {
+            return NSNull()
+        }
+        if let dictionary = value as? [AnyHashable: Any] {
+            return dictionary.reduce(into: [String: Any]()) { result, pair in
+                guard let key = pair.key as? String else {
+                    return
+                }
+                result[key] = jsonCompatible(pair.value)
+            }
+        }
+        if let dictionary = value as? [String: Any] {
+            return dictionary.reduce(into: [String: Any]()) { result, pair in
+                result[pair.key] = jsonCompatible(pair.value)
+            }
+        }
+        if let array = value as? [Any] {
+            return array.map(jsonCompatible)
+        }
+        if let number = value as? NSNumber {
+            return number
+        }
+        if let string = value as? String {
+            return string
+        }
+        if let bool = value as? Bool {
+            return bool
+        }
+        return value
     }
 
     private func parseYaku(_ value: Any?) -> [ScoreYaku] {

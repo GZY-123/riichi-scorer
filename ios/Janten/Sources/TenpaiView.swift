@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TenpaiView: View {
-    @State private var mode: GameMode = .fourPlayer
+    @State private var mode: GameMode = AppPreferences.defaultGameMode
     @State private var handTiles: [HandTile] = {
         // 测试钩子：-tenpaiPrefill "1m 2m 3m" 预填手牌
         let prefill = UserDefaults.standard.string(forKey: "tenpaiPrefill") ?? ""

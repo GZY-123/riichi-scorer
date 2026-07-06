@@ -17,7 +17,8 @@ targets:
     sources:
       - path: Janten/Sources
       - path: Janten/Resources/TileDetector.mlpackage
-        buildPhase: sources
+        type: folder
+        buildPhase: resources
       - path: Janten/Resources/engine.bundle.js
         buildPhase: resources
       - path: Janten/Resources/Assets.xcassets

@@ -1,0 +1,139 @@
+{
+  "" : {
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/Janten-primary.dia",
+    "emit-module-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/Janten-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/Janten-primary-emit-module.dia",
+    "pch" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/Janten-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/Janten-primary.swiftdeps"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/DesignSystem.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/DesignSystem~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/EngineBridge.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/EngineBridge~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/JantenApp.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/JantenApp~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/ScoreCameraView.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreCameraView~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/ScoreResultCard.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreResultCard~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/ScoreboardModels.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardModels~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/ScoreboardView.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/ScoreboardView~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/SettingsView.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/TenpaiCalculator.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiCalculator~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/TenpaiView.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TenpaiView~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/TileDetectionService.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/TileDetectionService~partial.swiftmodule"
+  },
+  "/Users/gezhenyu/riichi-scorer/ios/Janten/Sources/YakuReferenceView.swift" : {
+    "const-values" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.swiftconstvalues",
+    "dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.d",
+    "diagnostics" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.dia",
+    "index-unit-output-path" : "/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.o",
+    "llvm-bc" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.bc",
+    "object" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.o",
+    "swift-dependencies" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView.swiftdeps",
+    "swiftmodule" : "/Users/gezhenyu/riichi-scorer/ios/DerivedData/Build/Intermediates.noindex/Janten.build/Debug-iphonesimulator/Janten.build/Objects-normal/arm64/YakuReferenceView~partial.swiftmodule"
+  }
+}

@@ -2,16 +2,19 @@ import SwiftUI
 
 @main
 struct JantenApp: App {
+    @AppStorage(AppPreferences.appearanceKey) private var appearance = AppAppearance.system.rawValue
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(AppAppearance(rawValue: appearance)?.colorScheme)
         }
     }
 }
 
 struct ContentView: View {
     // 测试钩子：xcrun simctl launch ... -- -launchTab 1 可直达指定 Tab
-    @State private var selection = UserDefaults.standard.integer(forKey: "launchTab")
+    @State private var selection = Self.initialSelection()
 
     var body: some View {
         TabView(selection: $selection) {
@@ -27,11 +30,22 @@ struct ContentView: View {
                 .tabItem { Label("役种", systemImage: "list.star") }
                 .tag(2)
 
-            PlaceholderView(title: "记分簿", note: "开发中")
+            ScoreboardView()
                 .tabItem { Label("记分簿", systemImage: "square.grid.2x2") }
                 .tag(3)
+
+            SettingsView()
+                .tabItem { Label("设置", systemImage: "gearshape") }
+                .tag(4)
         }
         .tint(Color.felt)
+    }
+
+    private static func initialSelection() -> Int {
+        if ProcessInfo.processInfo.arguments.contains("-scoreboardDemo") {
+            return 3
+        }
+        return UserDefaults.standard.integer(forKey: "launchTab")
     }
 }
 

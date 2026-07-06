@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 
 struct ScoreCameraView: View {
-    @State private var mode: GameMode = .fourPlayer
+    @State private var mode: GameMode = AppPreferences.defaultGameMode
     @State private var photoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var detections: [TileDetectionService.Detection] = []

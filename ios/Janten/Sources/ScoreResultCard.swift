@@ -25,7 +25,7 @@ struct ScoreResultCard: View {
         .scaleEffect(appeared ? 1 : 0.94)
         .opacity(appeared ? 1 : 0)
         .onAppear {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            Haptics.notification(.success)
             withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
                 appeared = true
             }

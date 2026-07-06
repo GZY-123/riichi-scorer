@@ -1,6 +1,6 @@
 import Foundation
 
-enum GameMode: String, CaseIterable, Identifiable {
+enum GameMode: String, CaseIterable, Identifiable, Codable {
     case fourPlayer = "4p"
     case threePlayer = "3p"
 

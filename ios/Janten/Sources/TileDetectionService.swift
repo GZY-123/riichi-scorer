@@ -20,15 +20,14 @@ final class TileDetectionService {
     }
 
     private let confidenceThreshold: Double = 0.45
+    private static var cachedVisionModel: VNCoreMLModel?
 
     func detectTiles(in image: UIImage) throws -> [Detection] {
         guard let cgImage = image.cgImage else {
             throw TileDetectionError.invalidImage
         }
 
-        let configuration = MLModelConfiguration()
-        let detector = try TileDetector(configuration: configuration)
-        let visionModel = try VNCoreMLModel(for: detector.model)
+        let visionModel = try Self.loadVisionModel()
 
         var capturedDetections: [Detection] = []
         var capturedError: Error?
@@ -78,6 +77,22 @@ final class TileDetectionService {
             throw capturedError
         }
         return Self.trimOverLimitDetections(Self.clusterRows(capturedDetections))
+    }
+
+    private static func loadVisionModel() throws -> VNCoreMLModel {
+        if let cachedVisionModel {
+            return cachedVisionModel
+        }
+
+        guard let sourceURL = Bundle.main.url(forResource: "TileDetector", withExtension: "mlpackage") else {
+            throw TileDetectionError.modelUnavailable
+        }
+
+        let compiledURL = try MLModel.compileModel(at: sourceURL)
+        let model = try MLModel(contentsOf: compiledURL, configuration: MLModelConfiguration())
+        let visionModel = try VNCoreMLModel(for: model)
+        cachedVisionModel = visionModel
+        return visionModel
     }
 
     private static func clusterRows(_ detections: [Detection]) -> [Detection] {
@@ -172,12 +187,15 @@ final class TileDetectionService {
 
 enum TileDetectionError: LocalizedError {
     case invalidImage
+    case modelUnavailable
     case unknownLabel(String)
 
     var errorDescription: String? {
         switch self {
         case .invalidImage:
             return "图片无法读取，请换一张照片"
+        case .modelUnavailable:
+            return "本地识别模型不可用"
         case .unknownLabel(let label):
             return "识别到了未知类别：\(label)"
         }
