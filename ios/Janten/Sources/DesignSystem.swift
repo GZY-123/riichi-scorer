@@ -112,6 +112,7 @@ struct TileImageView: View {
 struct TileKeyboardView: View {
     let onTap: (String) -> Void
     let onDelete: () -> Void
+    var showsDelete: Bool = true
 
     private let rows: [(title: String, tiles: [String])] = [
         ("萬", (1...9).map { "\($0)m" }),
@@ -139,7 +140,9 @@ struct TileKeyboardView: View {
                         tileKey(code, keySize: keySize)
                     }
 
-                    deleteKey
+                    if showsDelete {
+                        deleteKey
+                    }
                     Spacer(minLength: 0)
                 }
             }

@@ -21,7 +21,8 @@ struct TenpaiView: View {
 
                     TileKeyboardView(
                         onTap: appendTile,
-                        onDelete: deleteLastTile
+                        onDelete: deleteLastTile,
+                        showsDelete: false
                     )
                     .jantenCard()
 
@@ -74,32 +75,57 @@ struct TenpaiView: View {
         .jantenCard()
     }
 
-    // 手牌换行网格：7 列自适应，13 张两行放下，不再横向滚动
+    // 手牌换行网格：固定 14 格（13 牌位 + 退格随行），退格始终跟在最后一张牌后面
     private var handStrip: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
-            if handTiles.isEmpty {
-                ForEach(0..<13, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.backgroundSecondary.opacity(0.45))
-                        .aspectRatio(3.0 / 4.0, contentMode: .fit)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .stroke(Color.hairline, lineWidth: 0.8)
-                        )
+            ForEach(handTiles) { tile in
+                Button {
+                    removeTile(tile)
+                } label: {
+                    TileImageView(code: tile.code, size: 42)
+                        .contentShape(Rectangle())
                 }
-            } else {
-                ForEach(handTiles) { tile in
-                    Button {
-                        removeTile(tile)
-                    } label: {
-                        TileImageView(code: tile.code, size: 42)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
+                .buttonStyle(.plain)
+            }
+
+            if !handTiles.isEmpty {
+                inlineDeleteKey
+            }
+
+            let placeholders = max(0, 13 - handTiles.count)
+            ForEach(0..<placeholders, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.backgroundSecondary.opacity(0.45))
+                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(Color.hairline, lineWidth: 0.8)
+                    )
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private var inlineDeleteKey: some View {
+        Button {
+            deleteLastTile()
+        } label: {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.backgroundSecondary)
+                .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                .overlay(
+                    Image(systemName: "delete.left")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.accentRed)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.hairline, lineWidth: 0.8)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("退格")
     }
 
     private func appendTile(_ code: String) {
