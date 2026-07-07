@@ -80,6 +80,23 @@ struct TenpaiView: View {
             }
             .pickerStyle(.segmented)
 
+            if !handTiles.isEmpty {
+                HStack(spacing: 10) {
+                    Button("理牌") {
+                        Haptics.press()
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) { sortHand() }
+                    }
+                    Button("清空") {
+                        Haptics.press()
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) { clearHand() }
+                    }
+                    Spacer()
+                }
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .buttonStyle(.bordered)
+                .tint(Color.felt)
+            }
+
             handStrip
         }
         .jantenCard()
@@ -148,6 +165,23 @@ struct TenpaiView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("退格")
+    }
+
+    private func sortHand() {
+        let suitOrder: [Character: Int] = ["m": 0, "p": 1, "s": 2, "z": 3]
+        handTiles.sort { a, b in
+            let sa = suitOrder[a.code.last ?? "z"] ?? 9
+            let sb = suitOrder[b.code.last ?? "z"] ?? 9
+            if sa != sb { return sa < sb }
+            let ra = a.code.first == "0" ? 5.5 : Double(String(a.code.first ?? "9")) ?? 9
+            let rb = b.code.first == "0" ? 5.5 : Double(String(b.code.first ?? "9")) ?? 9
+            return ra < rb
+        }
+    }
+
+    private func clearHand() {
+        handTiles.removeAll()
+        result = nil
     }
 
     private func appendTile(_ code: String) {
