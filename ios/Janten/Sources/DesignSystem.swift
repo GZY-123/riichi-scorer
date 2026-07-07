@@ -71,6 +71,8 @@ private extension UIColor {
 struct TileImageView: View {
     let code: String
     let size: CGFloat
+    // 素材已烘焙立体感，运行时阴影默认关闭（滚动性能）；确需强调的大图场景再开
+    var castsShadow: Bool = false
 
     var body: some View {
         Image(assetName)
@@ -83,7 +85,7 @@ struct TileImageView: View {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(Color.hairline.opacity(0.85), lineWidth: 0.8)
             )
-            .shadow(color: Color.black.opacity(0.14), radius: 4, x: 0, y: 2)
+            .shadow(color: castsShadow ? Color.black.opacity(0.14) : Color.clear, radius: castsShadow ? 4 : 0, x: 0, y: castsShadow ? 2 : 0)
             .accessibilityLabel(tileAccessibilityLabel(code))
     }
 
@@ -153,6 +155,8 @@ struct TileKeyboardView: View {
             }
         }
         .frame(height: keyboardHeight)
+        // 键盘为静态内容，栅格化为单一图层，滚动时不再逐键合成
+        .drawingGroup()
     }
 
     // 5 行键盘的固定总高：按标准屏宽的键高估算，避免 GeometryReader 撑坏父布局
@@ -217,7 +221,7 @@ struct JantenCardModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(Color.hairline.opacity(0.7), lineWidth: 0.8)
             )
-            .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 6)
     }
 }
 
