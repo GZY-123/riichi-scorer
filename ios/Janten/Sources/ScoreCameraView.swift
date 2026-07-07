@@ -1,8 +1,11 @@
+import AVFoundation
 import PhotosUI
 import SwiftUI
 import UIKit
 
 struct ScoreCameraView: View {
+    @Environment(\.openURL) private var openURL
+
     @State private var mode: GameMode = AppPreferences.defaultGameMode
     @State private var photoItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
@@ -23,14 +26,15 @@ struct ScoreCameraView: View {
     @State private var ippatsu = false
     @State private var doraIndicators: [DoraIndicatorTile] = []
     @State private var editingDora = false
+    @State private var showsCameraPermissionAlert = false
     @State private var honba = 0
     @State private var nukiDora = 0
     @State private var scoreError: String?
     @State private var result: ScoreCalculationResult?
     @State private var didLoadPrefill = false
 
-    private var cameraAvailable: Bool {
-        UIImagePickerController.isSourceTypeAvailable(.camera)
+    private var cameraHardwareAvailable: Bool {
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) != nil
     }
 
     var body: some View {
@@ -60,15 +64,25 @@ struct ScoreCameraView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("算点")
-            .sheet(isPresented: $showsCamera) {
-                CameraCaptureView { image in
-                    processPickedImage(image)
+            .fullScreenCover(isPresented: $showsCamera) {
+                CameraCaptureView { captureResult in
+                    processCameraCapture(captureResult)
                 }
             }
             .fullScreenCover(item: $result) { result in
                 ScoreResultCard(result: result) {
                     self.result = nil
                 }
+            }
+            .alert("相机权限未开启", isPresented: $showsCameraPermissionAlert) {
+                Button("取消", role: .cancel) {}
+                Button("去设置开启") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        openURL(url)
+                    }
+                }
+            } message: {
+                Text("请在系统设置里允许算点Janten访问相机。")
             }
             .onAppear(perform: loadPrefillIfNeeded)
             .onChange(of: photoItem) { _, newItem in
@@ -116,16 +130,12 @@ struct ScoreCameraView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
                 Button {
-                    guard cameraAvailable else {
-                        return
-                    }
-                    Haptics.tap()
-                    showsCamera = true
+                    handleCameraButtonTap()
                 } label: {
-                    actionLabel(title: "拍照", systemImage: "camera", disabled: !cameraAvailable)
+                    actionLabel(title: "拍照", systemImage: "camera", disabled: !cameraHardwareAvailable)
                 }
                 .buttonStyle(.plain)
-                .disabled(!cameraAvailable)
+                .disabled(!cameraHardwareAvailable)
 
                 PhotosPicker(selection: $photoItem, matching: .images) {
                     actionLabel(title: "从相册选择", systemImage: "photo.on.rectangle", disabled: false)
@@ -448,6 +458,38 @@ struct ScoreCameraView: View {
         .buttonStyle(.plain)
     }
 
+    private func handleCameraButtonTap() {
+        guard cameraHardwareAvailable else {
+            detectionMessage = "当前设备不可用相机"
+            Haptics.warning()
+            return
+        }
+
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            Haptics.tap()
+            showsCamera = true
+        case .notDetermined:
+            Haptics.tap()
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        showsCamera = true
+                    } else {
+                        showsCameraPermissionAlert = true
+                        Haptics.warning()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            showsCameraPermissionAlert = true
+            Haptics.warning()
+        @unknown default:
+            detectionMessage = "相机状态异常，请稍后重试"
+            Haptics.warning()
+        }
+    }
+
     private func loadPhotoItem(_ item: PhotosPickerItem?) {
         guard let item else {
             return
@@ -504,6 +546,79 @@ struct ScoreCameraView: View {
                     applyDetectedTiles([])
                 }
             }
+        }
+    }
+
+    @MainActor
+    private func processCameraCapture(_ captureResult: CameraCaptureResult) {
+        selectedImage = captureResult.handImage
+        detections = []
+        detectionMessage = nil
+        scoreError = nil
+        isDetecting = true
+
+        Task {
+            let output = await Task.detached(priority: .userInitiated) {
+                let service = TileDetectionService()
+                let handResult: Result<[TileDetectionService.Detection], Error>
+                let doraResult: Result<[TileDetectionService.Detection], Error>
+
+                do {
+                    handResult = .success(try service.detectTiles(in: captureResult.handImage))
+                } catch {
+                    handResult = .failure(error)
+                }
+
+                do {
+                    doraResult = .success(try service.detectTiles(in: captureResult.doraImage))
+                } catch {
+                    doraResult = .failure(error)
+                }
+
+                return CameraDetectionOutput(handResult: handResult, doraResult: doraResult)
+            }.value
+
+            await MainActor.run {
+                handleCameraDetectionOutput(output)
+            }
+        }
+    }
+
+    private func handleCameraDetectionOutput(_ output: CameraDetectionOutput) {
+        isDetecting = false
+        var messages: [String] = []
+        var shouldWarn = false
+
+        switch output.handResult {
+        case .success(let handDetections):
+            detections = handDetections
+            applyDetectedTiles(handDetections)
+        case .failure(let error):
+            detections = []
+            applyDetectedTiles([])
+            messages.append(friendlyMessage(for: error))
+            shouldWarn = true
+        }
+
+        switch output.doraResult {
+        case .success(let doraDetections):
+            let codes = Array(doraDetections.map(\.code).prefix(5))
+            if codes.isEmpty {
+                messages.append("未识别到宝牌指示牌")
+                shouldWarn = true
+            } else {
+                withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                    doraIndicators = codes.map { DoraIndicatorTile(code: $0) }
+                }
+            }
+        case .failure(let error):
+            messages.append("宝牌指示牌识别失败：\(friendlyMessage(for: error))")
+            shouldWarn = true
+        }
+
+        detectionMessage = messages.isEmpty ? nil : messages.joined(separator: "\n")
+        if shouldWarn {
+            Haptics.warning()
         }
     }
 
@@ -821,50 +936,9 @@ private struct DetectionPreview: View {
     }
 }
 
-private struct CameraCaptureView: UIViewControllerRepresentable {
-    let onImagePicked: (UIImage) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.cameraCaptureMode = .photo
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(
-            onImagePicked: onImagePicked,
-            dismiss: { dismiss() }
-        )
-    }
-
-    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let onImagePicked: (UIImage) -> Void
-        let dismiss: () -> Void
-
-        init(onImagePicked: @escaping (UIImage) -> Void, dismiss: @escaping () -> Void) {
-            self.onImagePicked = onImagePicked
-            self.dismiss = dismiss
-        }
-
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
-        ) {
-            if let image = info[.originalImage] as? UIImage {
-                onImagePicked(image)
-            }
-            dismiss()
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            dismiss()
-        }
-    }
+private struct CameraDetectionOutput {
+    let handResult: Result<[TileDetectionService.Detection], Error>
+    let doraResult: Result<[TileDetectionService.Detection], Error>
 }
 
 private struct EditableScoreTile: Identifiable, Equatable {

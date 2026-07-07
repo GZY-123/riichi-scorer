@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum AppAppearance: Int, CaseIterable, Identifiable {
     case system = 0
@@ -35,9 +36,14 @@ enum AppPreferences {
 }
 
 struct SettingsView: View {
+    @Environment(\.openURL) private var openURL
     @AppStorage(AppPreferences.appearanceKey) private var appearance = AppAppearance.system.rawValue
     @AppStorage(AppPreferences.defaultGameModeKey) private var defaultGameMode = GameMode.fourPlayer.rawValue
     @AppStorage(Haptics.enabledKey) private var hapticsEnabled = true
+    @State private var showsContactDialog = false
+    @State private var toastMessage: String?
+
+    private let contactEmail = "m2zhenyuge@gmail.com"
 
     var body: some View {
         NavigationStack {
@@ -52,6 +58,29 @@ struct SettingsView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("设置")
+            .confirmationDialog("联系作者", isPresented: $showsContactDialog, titleVisibility: .visible) {
+                Button("复制邮箱") {
+                    copyContactEmail()
+                }
+
+                Button("发送邮件") {
+                    sendFeedbackEmail()
+                }
+
+                Button("取消", role: .cancel) {}
+            }
+            .overlay(alignment: .bottom) {
+                if let toastMessage {
+                    Text(toastMessage)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(Color.ivory)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(Color.inkText.opacity(0.92), in: Capsule())
+                        .padding(.bottom, 22)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
         }
     }
 
@@ -111,11 +140,19 @@ struct SettingsView: View {
 
             aboutRow(title: "版本号", value: versionText)
             Divider().overlay(Color.hairline)
-            aboutRow(title: "规则引擎", value: "与微信小程序同源")
+            aboutRow(title: "规则引擎", value: "RiichiEngine")
             Divider().overlay(Color.hairline)
             aboutRow(title: "牌面素材", value: "FluffyStuff riichi-mahjong-tiles · CC0")
             Divider().overlay(Color.hairline)
             aboutRow(title: "GitHub", value: "github.com/GZY-123/riichi-scorer")
+            Divider().overlay(Color.hairline)
+            Button {
+                Haptics.tap()
+                showsContactDialog = true
+            } label: {
+                aboutRow(title: "联系作者", value: contactEmail)
+            }
+            .buttonStyle(.plain)
         }
         .jantenCard()
     }
@@ -140,6 +177,36 @@ struct SettingsView: View {
                 .foregroundStyle(Color.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func copyContactEmail() {
+        UIPasteboard.general.string = contactEmail
+        Haptics.tap()
+        showToast("邮箱已复制")
+    }
+
+    private func sendFeedbackEmail() {
+        Haptics.tap()
+        openURL(feedbackMailURL)
+    }
+
+    private var feedbackMailURL: URL {
+        let subject = "算点Janten反馈".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return URL(string: "mailto:\(contactEmail)?subject=\(subject)")!
+    }
+
+    private func showToast(_ message: String) {
+        withAnimation(.easeOut(duration: 0.18)) {
+            toastMessage = message
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeIn(duration: 0.18)) {
+                if toastMessage == message {
+                    toastMessage = nil
+                }
+            }
         }
     }
 
