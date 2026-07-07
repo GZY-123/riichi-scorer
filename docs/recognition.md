@@ -5,7 +5,7 @@
 本链路从房间页进入 `pages/capture/capture`：
 
 1. 小程序选择拍照或相册图片，先压缩到适合识别的尺寸。
-2. capture 页优先使用端侧 ONNX 模型识别：下载并缓存模型，离屏 canvas letterbox 到 640x640，调用 `wx.createInferenceSession` 推理，再按检测框位置整理为 `tiles`。
+2. capture 页优先使用端侧 ONNX 模型识别：下载并缓存模型，离屏 canvas letterbox 到 960x960，调用 `wx.createInferenceSession` 推理，再按检测框位置整理为 `tiles`。
 3. 如果端侧模型未配置、下载失败、基础库不支持或推理异常，capture 页自动回退到云端识别：上传图片到云存储。
 4. `recognizeTiles` 云函数下载图片，按 `VISION_PROVIDER` 选择视觉 Provider。
 5. 视觉 Provider 调用 DashScope 大模型或 Roboflow 检测模型，统一返回严格 JSON。
@@ -19,23 +19,25 @@
 
 ## 端侧模型
 
-端侧识别使用自训 YOLOv8n ONNX 模型，输入为 float32 `[1,3,640,640]`，输出为 `[1,42,8400]`：前 4 行是 `cx, cy, w, h`，后 38 行是类别分数，不含 objectness。类别顺序写死在 `miniprogram/utils/yoloDecode.ts`，不要在不重新导出模型的情况下调整。
+端侧识别使用自训 YOLO v3.1 segmentation ONNX 模型 `best-v31seg.onnx`，输入为 float32 `[1,3,960,960]`。模型约 38 MB，发布前需要将 `miniprogram/env.ts` 里的 `TILE_MODEL_FILE_ID` 替换为该模型上传到微信云存储后的 fileID。
+
+v3.1 seg 推理输出包含 `output0` 和 `output1`。小程序端侧链路只读取 `output0`：形状为 `[1,74,18900]`，前 4 行是 `cx, cy, w, h`，第 4 到第 41 行是 38 个麻将牌类别分数，最后 32 行是掩码系数，当前牌面识别不使用。输出不含 objectness。解码器仍兼容旧检测模型的 `[1,42,anchors]` 输出，类别顺序写死在 `miniprogram/utils/yoloDecode.ts`，不要在不重新导出模型的情况下调整。
 
 ### 上传和配置
 
 1. 在微信云开发控制台打开当前环境的云存储。
-2. 拖拽上传导出的 `best-fp32.onnx`。
+2. 拖拽上传导出的 `best-v31seg.onnx`。
 3. 复制上传后的 `fileID`。
-4. 将 `miniprogram/env.ts` 里的 `TILE_MODEL_FILE_ID` 从占位值改成复制的 `fileID`。
+4. 将 `miniprogram/env.ts` 里的 `TILE_MODEL_FILE_ID` 替换成复制的 `fileID`。
 5. 重新上传小程序代码。
 
-`TILE_MODEL_FILE_ID` 只保存云存储 fileID，不保存任何密钥。模型约 12 MB，首次识别会下载到本地用户目录：
+`TILE_MODEL_FILE_ID` 只保存云存储 fileID，不保存任何密钥。首次识别会下载到本地用户目录：
 
 ```text
-${wx.env.USER_DATA_PATH}/tile-model.onnx
+${wx.env.USER_DATA_PATH}/tile-model-<fileID fingerprint>.onnx
 ```
 
-缓存存在时会直接复用，不再访问云存储。若替换了模型但文件名和缓存路径不变，需要清理小程序本地缓存或改代码中的缓存策略后重新发布。
+缓存存在时会直接复用，不再访问云存储。更换 `TILE_MODEL_FILE_ID` 会自动生成新的缓存路径；如果覆盖同一个云存储路径导致 fileID 不变，需要清理小程序本地缓存或改用新的云存储路径后重新发布。
 
 ### 回退链路
 

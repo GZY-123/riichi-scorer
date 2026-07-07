@@ -76,8 +76,7 @@ export const YOLO_TILE_CLASSES = [
 
 const BOX_ROWS = 4;
 const CLASS_COUNT = YOLO_TILE_CLASSES.length;
-const OUTPUT_ROWS = BOX_ROWS + CLASS_COUNT;
-const DEFAULT_ANCHOR_COUNT = 8400;
+const MIN_OUTPUT_ROWS = BOX_ROWS + CLASS_COUNT;
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.45;
 const DEFAULT_NMS_THRESHOLD = 0.45;
 
@@ -121,22 +120,23 @@ function normalizeOutputShape(
   dataLength: number
 ): { anchorCount: number } {
   if (outputShape === undefined || outputShape.length === 0) {
-    if (dataLength !== OUTPUT_ROWS * DEFAULT_ANCHOR_COUNT) {
-      throw new Error(`YOLO 输出长度应为 ${OUTPUT_ROWS * DEFAULT_ANCHOR_COUNT}，实际为 ${dataLength}`);
-    }
-    return { anchorCount: DEFAULT_ANCHOR_COUNT };
+    throw new Error("YOLO 输出 shape 缺失，无法推导布局");
   }
 
-  if (outputShape.length !== 3 || outputShape[0] !== 1 || outputShape[1] !== OUTPUT_ROWS) {
-    throw new Error(`YOLO 输出 shape 应为 [1,${OUTPUT_ROWS},8400]，实际为 [${outputShape.join(",")}]`);
+  if (outputShape.length !== 3 || outputShape[0] !== 1) {
+    throw new Error(`YOLO 输出 shape 应为 [1,rows,anchors]，实际为 [${outputShape.join(",")}]`);
   }
 
+  const rowCount = outputShape[1];
   const anchorCount = outputShape[2];
+  if (!Number.isSafeInteger(rowCount) || rowCount < MIN_OUTPUT_ROWS) {
+    throw new Error(`YOLO 输出 rows 至少应为 ${MIN_OUTPUT_ROWS}，实际为 ${rowCount}`);
+  }
   if (!Number.isSafeInteger(anchorCount) || anchorCount <= 0) {
     throw new Error(`YOLO 输出 anchor 数无效：${anchorCount}`);
   }
-  if (dataLength < OUTPUT_ROWS * anchorCount) {
-    throw new Error(`YOLO 输出长度不足：需要 ${OUTPUT_ROWS * anchorCount}，实际 ${dataLength}`);
+  if (dataLength < rowCount * anchorCount) {
+    throw new Error(`YOLO 输出长度不足：需要 ${rowCount * anchorCount}，实际 ${dataLength}`);
   }
   return { anchorCount };
 }
