@@ -16,7 +16,10 @@
         <view class="section-title">手牌</view>
         <view class="section-hint">点牌可删除该张</view>
       </view>
-      <button class="mini-button" bindtap="onSortTap">理牌</button>
+      <view class="hand-actions">
+        <button class="mini-button" bindtap="onSortTap">理牌</button>
+        <button class="mini-button" bindtap="onClearTap">清空</button>
+      </view>
     </view>
 
     <scroll-view class="tile-scroll" scroll-x="true" enable-flex="true">
@@ -31,12 +34,29 @@
     </scroll-view>
 
     <view class="progress-line num">{{progressText}}</view>
-    <tile-keyboard bind:tap="onKeyboardTap" bind:delete="onKeyboardDelete" />
+    <tile-keyboard disabled-codes="{{disabledCodes}}" bind:tap="onKeyboardTap" bind:delete="onKeyboardDelete" />
   </view>
 
   <view class="section panel result-panel result-{{resultTone}}">
     <view class="result-title">{{resultTitle}}</view>
     <view wx:if="{{resultHint}}" class="result-hint">{{resultHint}}</view>
+    <view wx:if="{{drawAnalyses.length > 0}}" class="draw-list">
+      <block wx:for="{{drawAnalyses}}" wx:key="key">
+        <view class="draw-item">
+          <view class="draw-tile">
+            <tile-image code="{{item.draw}}" size="medium" />
+          </view>
+          <view class="draw-detail">
+            <view class="draw-waits">
+              <block wx:for="{{item.waits}}" wx:for-item="wait" wx:key="key">
+                <tile-image code="{{wait.tile}}" size="small" />
+              </block>
+            </view>
+            <view class="draw-count">剩 {{item.totalRemaining}} 枚</view>
+          </view>
+        </view>
+      </block>
+    </view>
     <view wx:if="{{waits.length > 0}}" class="wait-grid">
       <block wx:for="{{waits}}" wx:key="key">
         <view class="wait-item">

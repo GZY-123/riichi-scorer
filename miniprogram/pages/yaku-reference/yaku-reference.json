@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "役种表"
+  "navigationBarTitleText": "役种表",
+  "usingComponents": {
+    "tile-image": "../../components/tile-image/tile-image"
+  }
 }

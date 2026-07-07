@@ -38,6 +38,16 @@
   opacity: 0.76;
 }
 
+.keyboard-key-disabled {
+  opacity: 0.35;
+  filter: grayscale(0.65);
+}
+
+.keyboard-key-disabled.keyboard-key-active {
+  transform: none;
+  opacity: 0.35;
+}
+
 .keyboard-tool-row {
   align-items: center;
 }

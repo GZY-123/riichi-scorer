@@ -104,6 +104,17 @@ interface RecognizeResult {
   message?: string;
 }
 
+interface DualCaptureResult {
+  photoPath?: string;
+  handImagePath?: string;
+  doraImagePath?: string;
+  handResult?: RecognizeResult;
+  handLocalError?: string;
+  doraTiles?: string[];
+  doraError?: string;
+  doraSkipped?: boolean;
+}
+
 interface ScoreResult {
   ron?: number;
   tsumo?: {
@@ -291,6 +302,48 @@ Page({
       winnerIndex,
       loserIndex
     });
+  },
+
+  onOpenCameraCapture() {
+    wx.navigateTo({
+      url: "/pages/camera-capture/camera-capture",
+      success: (result) => {
+        result.eventChannel.once("dualCaptureComplete", (payload: DualCaptureResult) => {
+          void this.handleDualCaptureResult(payload);
+        });
+      },
+      fail: (error) => this.showError(error, "打开相机失败")
+    });
+  },
+
+  async handleDualCaptureResult(payload: DualCaptureResult) {
+    const handImagePath = payload.handImagePath;
+    if (!handImagePath) {
+      wx.showToast({ title: "相机未返回手牌裁图", icon: "none" });
+      return;
+    }
+
+    this.setData({
+      imageTempPath: payload.photoPath || handImagePath,
+      recognizeState: payload.handResult ? "应用识别结果" : "云端识别中（本地不可用）",
+      recognizeError: "",
+      confidenceText: "",
+      rawText: "",
+      scorePreview: null
+    });
+
+    try {
+      if (payload.handResult) {
+        this.applyRecognizedResult(payload.handResult);
+      } else {
+        const compressedPath = await this.compressForRecognition(handImagePath);
+        await this.recognizeWithCloudFallback(compressedPath, payload.handLocalError || "本地识别失败");
+      }
+      this.applyRecognizedDora(payload);
+    } catch (error) {
+      this.setData({ recognizeState: "识别失败，可手动录入" });
+      this.showError(error, "识别失败");
+    }
   },
 
   async onChooseImage() {
@@ -722,7 +775,7 @@ Page({
     return new Promise((resolve, reject) => {
       wx.chooseImage({
         count: 1,
-        sourceType: ["camera", "album"],
+        sourceType: ["album"],
         sizeType: ["compressed"],
         success: (result) => {
           const path = result.tempFilePaths[0];
@@ -820,6 +873,21 @@ Page({
       doraIndicators,
       doraItems: doraIndicators.map((tile, index) => ({ key: `${index}_${tile}`, code: tile })),
       scorePreview: null
+    });
+  },
+
+  applyRecognizedDora(payload: DualCaptureResult) {
+    const doraTiles = (payload.doraTiles ?? [])
+      .filter((tile) => isTileNotation(tile, this.data.mode))
+      .slice(0, 5);
+    if (doraTiles.length > 0) {
+      this.syncDora(doraTiles);
+      return;
+    }
+
+    wx.showToast({
+      title: payload.doraSkipped ? "宝牌区已跳过：本地识别不可用" : "未识别到宝牌指示牌",
+      icon: "none"
     });
   },
 

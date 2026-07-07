@@ -1,0 +1,42 @@
+<view class="camera-page">
+  <camera
+    class="camera-view"
+    device-position="back"
+    resolution="high"
+    flash="off"
+    mode="normal"
+    bindinitdone="onCameraReady"
+    binderror="onCameraError"
+  />
+
+  <cover-view class="mask-layer"></cover-view>
+
+  <cover-view class="guide-frame hand-guide" style="{{handFrameStyle}}">
+    <cover-view class="guide-title hand-title">手牌</cover-view>
+  </cover-view>
+
+  <cover-view class="guide-frame dora-guide" style="{{doraFrameStyle}}">
+    <cover-view class="guide-title dora-title">宝牌指示牌</cover-view>
+  </cover-view>
+
+  <cover-view wx:if="{{recognizeState}}" class="status-pill">{{recognizeState}}</cover-view>
+  <cover-view wx:if="{{captureError}}" class="error-pill">{{captureError}}</cover-view>
+
+  <cover-view class="bottom-controls">
+    <cover-view class="shutter {{capturing ? 'disabled' : ''}}" bindtap="onShutterTap">
+      <cover-view class="shutter-core"></cover-view>
+    </cover-view>
+  </cover-view>
+  <cover-view class="close-button" bindtap="onCloseTap">X</cover-view>
+
+  <view wx:if="{{cameraDenied}}" class="permission-overlay">
+    <view class="permission-panel">
+      <view class="permission-title">需要相机权限</view>
+      <view class="permission-desc">请在微信设置中允许相机权限后继续拍摄。</view>
+      <button class="permission-button" open-type="openSetting" bindopensetting="onOpenSetting">去设置</button>
+      <button class="permission-secondary" bindtap="onCloseTap">返回</button>
+    </view>
+  </view>
+
+  <canvas id="cropCanvas" type="2d" class="crop-canvas"></canvas>
+</view>

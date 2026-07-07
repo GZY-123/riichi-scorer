@@ -12,10 +12,17 @@ export interface TenpaiResult {
   error?: string;
 }
 
+export interface TenpaiDrawAnalysis {
+  draw: string;
+  waits: TenpaiWait[];
+  totalRemaining: number;
+}
+
 type TileSuit = "m" | "p" | "s" | "z";
 
 const engine = require("./engine-lib/index.js") as EngineApi;
 const SUIT_ORDER: Record<TileSuit, number> = { m: 0, p: 1, s: 2, z: 3 };
+const RED_FIVE_CODES = ["0m", "0p", "0s"] as const;
 const FOUR_PLAYER_TILES = buildTileTypes("4p");
 const THREE_PLAYER_TILES = buildTileTypes("3p");
 
@@ -32,12 +39,12 @@ export function calcWaits(tiles: string[], mode: GameMode): TenpaiResult {
     return { waits: [], error: error instanceof Error ? error.message : "牌面包含无效牌" };
   }
 
-  const counts = countTiles(normalizedTiles);
-  const overLimit = [...counts.entries()].find(([, count]) => count > 4);
-  if (overLimit !== undefined) {
-    return { waits: [], error: `${overLimit[0]} 已超过 4 枚` };
+  const limitError = tileLimitError(cleanedTiles, normalizedTiles);
+  if (limitError !== undefined) {
+    return { waits: [], error: limitError };
   }
 
+  const counts = countTiles(normalizedTiles);
   const waits: TenpaiWait[] = [];
   for (const candidate of tileTypesForMode(mode)) {
     const count = counts.get(candidate) ?? 0;
@@ -54,6 +61,46 @@ export function calcWaits(tiles: string[], mode: GameMode): TenpaiResult {
   }
 
   return { waits };
+}
+
+export function analyzeDraws(tiles12: string[], mode: GameMode): TenpaiDrawAnalysis[] {
+  if (tiles12.length !== 12) {
+    return [];
+  }
+
+  const cleanedTiles = tiles12.map((tile) => tile.trim());
+  let normalizedTiles: string[];
+  try {
+    normalizedTiles = cleanedTiles.map((tile) => normalizeTile(tile, mode));
+  } catch {
+    return [];
+  }
+
+  if (tileLimitError(cleanedTiles, normalizedTiles) !== undefined) {
+    return [];
+  }
+
+  const counts = countTiles(normalizedTiles);
+  const analyses: TenpaiDrawAnalysis[] = [];
+  for (const candidate of tileTypesForMode(mode)) {
+    const count = counts.get(candidate) ?? 0;
+    if (count >= 4) {
+      continue;
+    }
+
+    const result = calcWaits([...cleanedTiles, candidate], mode);
+    if (result.error || result.waits.length === 0) {
+      continue;
+    }
+
+    analyses.push({
+      draw: candidate,
+      waits: result.waits,
+      totalRemaining: result.waits.reduce((sum, wait) => sum + wait.remaining, 0)
+    });
+  }
+
+  return analyses.sort((left, right) => right.totalRemaining - left.totalRemaining || compareTiles(left.draw, right.draw));
 }
 
 export function sortTileCodes(tiles: readonly string[]): string[] {
@@ -90,6 +137,22 @@ function countTiles(tiles: readonly string[]): Map<string, number> {
     counts.set(tile, (counts.get(tile) ?? 0) + 1);
   }
   return counts;
+}
+
+function tileLimitError(cleanedTiles: readonly string[], normalizedTiles: readonly string[]): string | undefined {
+  const redCounts = countTiles(cleanedTiles);
+  for (const code of RED_FIVE_CODES) {
+    if ((redCounts.get(code) ?? 0) > 1) {
+      return `${code} 已超过 1 枚`;
+    }
+  }
+
+  const counts = countTiles(normalizedTiles);
+  const overLimit = [...counts.entries()].find(([, count]) => count > 4);
+  if (overLimit !== undefined) {
+    return `${overLimit[0]} 已超过 4 枚`;
+  }
+  return undefined;
 }
 
 function normalizeTile(tile: string, mode: GameMode): string {

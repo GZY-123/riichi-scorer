@@ -7,6 +7,7 @@
     "pages/history-detail/history-detail",
     "pages/room/room",
     "pages/capture/capture",
+    "pages/camera-capture/camera-capture",
     "pages/settlement/settlement"
   ],
   "window": {

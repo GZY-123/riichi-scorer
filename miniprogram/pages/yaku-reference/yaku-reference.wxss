@@ -86,3 +86,28 @@
   font-size: 25rpx;
   line-height: 1.55;
 }
+
+.example-scroll {
+  width: 100%;
+  margin-top: 14rpx;
+  padding-bottom: 4rpx;
+  white-space: nowrap;
+}
+
+.example-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.example-tile {
+  flex: 0 0 auto;
+  padding: 4rpx;
+  border: 2rpx solid transparent;
+  border-radius: 8rpx;
+  background: #fdfcf8;
+}
+
+.example-tile.winning {
+  border-color: var(--red);
+}

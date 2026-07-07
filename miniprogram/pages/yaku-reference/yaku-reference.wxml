@@ -17,6 +17,15 @@
             <text class="yaku-han">{{yaku.han}}</text>
           </view>
           <view class="yaku-desc">{{yaku.desc}}</view>
+          <scroll-view wx:if="{{yaku.exampleTiles.length > 0}}" class="example-scroll" scroll-x="true" enable-flex="true">
+            <view class="example-strip">
+              <block wx:for="{{yaku.exampleTiles}}" wx:for-item="tile" wx:key="key">
+                <view class="example-tile {{tile.winning ? 'winning' : ''}}">
+                  <tile-image code="{{tile.code}}" size="small" />
+                </view>
+              </block>
+            </view>
+          </scroll-view>
         </view>
       </block>
     </view>

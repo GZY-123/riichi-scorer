@@ -64,6 +64,12 @@
   margin-bottom: 20rpx;
 }
 
+.hand-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12rpx;
+}
+
 .section-title {
   color: var(--ink);
   font-size: 32rpx;
@@ -163,6 +169,53 @@
 }
 
 .wait-count {
+  color: var(--muted);
+  font-size: 22rpx;
+  line-height: 1.2;
+}
+
+.draw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.draw-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 14rpx;
+  border: 1rpx solid var(--line);
+  border-radius: 12rpx;
+  background: #fdfcf8;
+}
+
+.draw-tile {
+  flex: 0 0 auto;
+  padding-right: 12rpx;
+  border-right: 1rpx solid var(--line);
+}
+
+.draw-detail {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.draw-waits {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6rpx;
+}
+
+.draw-count {
+  flex: 0 0 auto;
   color: var(--muted);
   font-size: 22rpx;
   line-height: 1.2;

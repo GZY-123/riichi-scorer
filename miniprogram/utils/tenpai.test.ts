@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcWaits } from "./tenpai";
+import { analyzeDraws, calcWaits } from "./tenpai";
 
 function waitTiles(tiles: string[], mode: "3p" | "4p" = "4p"): string[] {
   return calcWaits(tiles, mode).waits.map((wait) => wait.tile);
@@ -59,5 +59,32 @@ describe("calcWaits", () => {
     expect(result.error).toBeUndefined();
     expect(result.waits.map((wait) => wait.tile)).toEqual(["1m", "9m", "1p", "9p", "1s", "9s", "1z", "2z", "3z", "4z", "5z", "6z", "7z"]);
     expect(result.waits.some((wait) => /^[2-8]m$/.test(wait.tile))).toBe(false);
+  });
+});
+
+describe("analyzeDraws", () => {
+  it("finds the 9m draw that makes 111m 2345678m 99m tenpai", () => {
+    const analyses = analyzeDraws(["1m", "1m", "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "9m"], "4p");
+    const draw9m = analyses.find((analysis) => analysis.draw === "9m");
+
+    expect(draw9m).toBeDefined();
+    expect(draw9m?.waits.length).toBeGreaterThan(0);
+    expect(draw9m?.totalRemaining).toBe(draw9m?.waits.reduce((sum, wait) => sum + wait.remaining, 0));
+  });
+
+  it("sorts draw candidates by total remaining tiles", () => {
+    const analyses = analyzeDraws(["1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "1p", "2p", "3p"], "4p");
+
+    expect(analyses.length).toBeGreaterThan(1);
+    for (let index = 1; index < analyses.length; index += 1) {
+      expect(analyses[index - 1].totalRemaining).toBeGreaterThanOrEqual(analyses[index].totalRemaining);
+    }
+  });
+
+  it("filters removed manzu draw candidates in three-player mode", () => {
+    const analyses = analyzeDraws(["1m", "9m", "1p", "9p", "1s", "9s", "1z", "2z", "3z", "4z", "5z", "6z"], "3p");
+
+    expect(analyses.some((analysis) => /^[2-8]m$/.test(analysis.draw))).toBe(false);
+    expect(analyses.find((analysis) => analysis.draw === "7z")?.waits.length).toBeGreaterThan(0);
   });
 });

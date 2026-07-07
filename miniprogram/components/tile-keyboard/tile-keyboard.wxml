@@ -3,7 +3,7 @@
     <view class="keyboard-row">
       <block wx:for="{{item.tiles}}" wx:for-item="tile" wx:key="code">
         <view
-          class="keyboard-key"
+          class="keyboard-key {{tile.disabled ? 'keyboard-key-disabled' : ''}}"
           data-code="{{tile.code}}"
           hover-class="keyboard-key-active"
           hover-stay-time="80"
@@ -17,7 +17,7 @@
   <view class="keyboard-row keyboard-tool-row">
     <block wx:for="{{redTiles}}" wx:for-item="tile" wx:key="code">
       <view
-        class="keyboard-key"
+        class="keyboard-key {{tile.disabled ? 'keyboard-key-disabled' : ''}}"
         data-code="{{tile.code}}"
         hover-class="keyboard-key-active"
         hover-stay-time="80"

@@ -4,13 +4,62 @@ export interface YakuTableItem {
   han: string;
   menzenOnly: boolean;
   desc: string;
+  example: string[];
 }
 
 export const YAKU_GROUPS = ["1番", "2番", "3番", "6番", "役满", "双倍役满"] as const;
 
 export type YakuGroupTitle = (typeof YAKU_GROUPS)[number];
 
-export const yakuTable: YakuTableItem[] = [
+const sharedRiichiExample = ["2m", "3m", "4m", "5m", "6m", "7m", "2p", "3p", "4p", "6s", "6s", "7s", "8s", "9s"];
+const sharedYakuhaiDragonExample = ["5z", "5z", "5z", "2m", "3m", "4m", "5p", "6p", "7p", "6m", "6m", "7s", "8s", "9s"];
+const sharedWindExample = ["1z", "1z", "1z", "2m", "3m", "4m", "5p", "6p", "7p", "6m", "6m", "7s", "8s", "9s"];
+const sharedKokushiExample = ["1m", "9m", "1p", "9p", "1s", "9s", "1z", "2z", "3z", "4z", "5z", "6z", "7z", "1m"];
+const sharedSuuankouExample = ["1m", "1m", "1m", "3p", "3p", "3p", "5s", "5s", "5s", "7z", "7z", "7z", "9m", "9m"];
+const sharedChuurenExample = ["1m", "1m", "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "9m", "9m", "5m"];
+
+const YAKU_EXAMPLES: Record<string, string[]> = {
+  riichi: sharedRiichiExample,
+  ippatsu: sharedRiichiExample,
+  "menzen-tsumo": sharedRiichiExample,
+  "double-riichi": sharedRiichiExample,
+  pinfu: ["2m", "3m", "4m", "6m", "7m", "8m", "3p", "4p", "5p", "2s", "2s", "6s", "7s", "8s"],
+  tanyao: ["2m", "3m", "4m", "5m", "6m", "7m", "3p", "4p", "5p", "5s", "5s", "6s", "7s", "8s"],
+  iipeikou: ["3m", "3m", "4m", "4m", "5m", "5m", "6p", "7p", "8p", "2s", "3s", "4s", "9s", "9s"],
+  "yakuhai-5z": sharedYakuhaiDragonExample,
+  "yakuhai-6z": ["6z", "6z", "6z", ...sharedYakuhaiDragonExample.slice(3)],
+  "yakuhai-7z": ["7z", "7z", "7z", ...sharedYakuhaiDragonExample.slice(3)],
+  "yakuhai-seat-wind": sharedWindExample,
+  "yakuhai-prevalent-wind": sharedWindExample,
+  "yakuhai-north": ["4z", "4z", "4z", "1p", "2p", "3p", "9p", "9p", "9p", "5s", "6s", "7s", "6s", "6s"],
+  chiitoitsu: ["1m", "1m", "3m", "3m", "5p", "5p", "7p", "7p", "2s", "2s", "4s", "4s", "1z", "1z"],
+  chanta: ["1m", "2m", "3m", "7p", "8p", "9p", "1s", "2s", "3s", "9m", "9m", "9m", "1z", "1z"],
+  ittsuu: ["1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "2p", "3p", "4p", "8s", "8s"],
+  "sanshoku-doujun": ["2m", "3m", "4m", "2p", "3p", "4p", "2s", "3s", "4s", "7m", "8m", "9m", "6s", "6s"],
+  "sanshoku-doukou": ["2m", "2m", "2m", "2p", "2p", "2p", "2s", "2s", "2s", "4s", "5s", "6s", "9p", "9p"],
+  sanankou: ["2m", "2m", "2m", "3p", "3p", "3p", "4s", "4s", "4s", "1s", "2s", "3s", "9m", "9m"],
+  toitoi: ["2m", "2m", "2m", "5p", "5p", "5p", "7s", "7s", "7s", "9s", "9s", "9s", "1z", "1z"],
+  shousangen: ["5z", "5z", "5z", "6z", "6z", "6z", "7z", "7z", "1m", "2m", "3m", "9p", "9p", "9p"],
+  honroutou: ["1m", "1m", "1m", "9m", "9m", "9m", "1p", "1p", "1p", "9p", "9p", "9p", "1z", "1z"],
+  ryanpeikou: ["2m", "2m", "3m", "3m", "4m", "4m", "5p", "5p", "6p", "6p", "7p", "7p", "9s", "9s"],
+  honitsu: ["1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "1z", "1z", "1z", "5m", "5m"],
+  junchan: ["1m", "2m", "3m", "7m", "8m", "9m", "1p", "2p", "3p", "7s", "8s", "9s", "9p", "9p"],
+  chinitsu: ["1m", "2m", "3m", "2m", "3m", "4m", "4m", "5m", "6m", "6m", "7m", "8m", "9m", "9m"],
+  kokushi: sharedKokushiExample,
+  "kokushi-13": sharedKokushiExample,
+  suuankou: sharedSuuankouExample,
+  "suuankou-tanki": sharedSuuankouExample,
+  daisangen: ["5z", "5z", "5z", "6z", "6z", "6z", "7z", "7z", "7z", "2m", "3m", "4m", "8s", "8s"],
+  tsuuiisou: ["1z", "1z", "1z", "2z", "2z", "2z", "5z", "5z", "5z", "6z", "6z", "6z", "7z", "7z"],
+  shousuushi: ["1z", "1z", "1z", "2z", "2z", "2z", "3z", "3z", "3z", "4z", "4z", "2m", "3m", "4m"],
+  daisuushi: ["1z", "1z", "1z", "2z", "2z", "2z", "3z", "3z", "3z", "4z", "4z", "4z", "5m", "5m"],
+  ryuuiisou: ["2s", "3s", "4s", "2s", "3s", "4s", "6s", "6s", "6s", "8s", "8s", "8s", "6z", "6z"],
+  chinroutou: ["1m", "1m", "1m", "9m", "9m", "9m", "1p", "1p", "1p", "9s", "9s", "9s", "9p", "9p"],
+  chuuren: sharedChuurenExample,
+  "junsei-chuuren": sharedChuurenExample
+};
+
+const yakuItems: Array<Omit<YakuTableItem, "example">> = [
   {
     id: "riichi",
     name: "立直",
@@ -362,6 +411,11 @@ export const yakuTable: YakuTableItem[] = [
     desc: "门前九莲宝灯九面等待后和牌"
   }
 ];
+
+export const yakuTable: YakuTableItem[] = yakuItems.map((item) => ({
+  ...item,
+  example: YAKU_EXAMPLES[item.id] ?? []
+}));
 
 export function yakuGroupOf(item: YakuTableItem): YakuGroupTitle {
   if (item.han.startsWith("双倍役满")) return "双倍役满";
