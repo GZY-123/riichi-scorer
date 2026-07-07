@@ -9,6 +9,7 @@ final class EngineBridge {
     private let context: JSContext
     private let engine: JSValue
     private let exceptionStore: EngineExceptionStore
+    private let lock = NSLock()
 
     private init() {
         let exceptionStore = EngineExceptionStore()
@@ -162,6 +163,11 @@ final class EngineBridge {
     }
 
     private func invoke(_ function: String, _ arguments: [Any]) throws -> JSValue {
+        lock.lock()
+        defer {
+            lock.unlock()
+        }
+
         exceptionStore.message = nil
         context.exception = nil
 

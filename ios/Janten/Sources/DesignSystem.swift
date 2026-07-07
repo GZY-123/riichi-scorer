@@ -120,6 +120,7 @@ struct TileKeyboardView: View {
     let onTap: (String) -> Void
     let onDelete: () -> Void
     var showsDelete: Bool = true
+    var disabledCodes: Set<String> = []
 
     private let rows: [(title: String, tiles: [String])] = [
         ("萬", (1...9).map { "\($0)m" }),
@@ -180,7 +181,11 @@ struct TileKeyboardView: View {
     }
 
     private func tileKey(_ code: String, keySize: CGFloat) -> some View {
-        Button {
+        let isDisabled = disabledCodes.contains(code)
+        return Button {
+            guard !isDisabled else {
+                return
+            }
             Haptics.tap()
             onTap(code)
         } label: {
@@ -188,6 +193,8 @@ struct TileKeyboardView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.35 : 1.0)
         .accessibilityLabel(tileAccessibilityLabel(code))
     }
 

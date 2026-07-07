@@ -8,9 +8,17 @@ struct TenpaiView: View {
         return prefill.split(separator: " ").map { HandTile(code: String($0)) }
     }()
     @State private var result: TenpaiResult?
+    @State private var drawAnalyses: [(draw: String, waits: [TenpaiWait])] = []
+    @State private var isAnalyzingDraws = false
+    @State private var analysisGeneration = 0
+    @State private var analysisTask: Task<Void, Never>?
 
     private var tileCodes: [String] {
         handTiles.map(\.code)
+    }
+
+    private var disabledCodes: Set<String> {
+        TenpaiCalculator.disabledCodes(for: tileCodes)
     }
 
     var body: some View {
@@ -22,14 +30,12 @@ struct TenpaiView: View {
                     TileKeyboardView(
                         onTap: appendTile,
                         onDelete: deleteLastTile,
-                        showsDelete: false
+                        showsDelete: false,
+                        disabledCodes: disabledCodes
                     )
                     .jantenCard()
 
-                    if let result {
-                        TenpaiResultCard(result: result)
-                            .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                    }
+                    resultSection
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -45,6 +51,9 @@ struct TenpaiView: View {
             .onChange(of: mode) { _, _ in
                 Haptics.tap()
                 recalculateIfReady()
+            }
+            .onDisappear {
+                analysisTask?.cancel()
             }
         }
     }
@@ -74,6 +83,17 @@ struct TenpaiView: View {
             handStrip
         }
         .jantenCard()
+    }
+
+    @ViewBuilder
+    private var resultSection: some View {
+        if handTiles.count == 12 {
+            DrawAnalysisCard(analyses: drawAnalyses, isAnalyzing: isAnalyzingDraws)
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        } else if let result {
+            TenpaiResultCard(result: result)
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        }
     }
 
     // 手牌换行网格：固定 14 格（13 牌位 + 退格随行），退格始终跟在最后一张牌后面
@@ -131,7 +151,8 @@ struct TenpaiView: View {
     }
 
     private func appendTile(_ code: String) {
-        guard handTiles.count < 13 else {
+        guard handTiles.count < 13,
+              TenpaiCalculator.canAppendTile(code, to: tileCodes) else {
             return
         }
         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
@@ -156,11 +177,47 @@ struct TenpaiView: View {
     }
 
     private func recalculateIfReady() {
+        analysisGeneration += 1
+        analysisTask?.cancel()
+        let generation = analysisGeneration
+        let currentTiles = tileCodes
+        let currentMode = mode
+
         withAnimation(.easeInOut(duration: 0.2)) {
             if handTiles.count == 13 {
+                isAnalyzingDraws = false
+                drawAnalyses = []
                 result = TenpaiCalculator.calcWaits(tiles: tileCodes, mode: mode)
+            } else if handTiles.count == 12 {
+                result = nil
+                drawAnalyses = []
+                isAnalyzingDraws = true
             } else {
                 result = nil
+                drawAnalyses = []
+                isAnalyzingDraws = false
+            }
+        }
+
+        guard handTiles.count == 12 else {
+            return
+        }
+
+        analysisTask = Task.detached(priority: .userInitiated) {
+            let analyses = TenpaiCalculator.analyzeDraws(tiles12: currentTiles, mode: currentMode)
+            guard !Task.isCancelled else {
+                return
+            }
+
+            await MainActor.run {
+                guard analysisGeneration == generation else {
+                    return
+                }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    drawAnalyses = analyses
+                    isAnalyzingDraws = false
+                }
+                Haptics.tap()
             }
         }
     }
@@ -213,5 +270,87 @@ private struct TenpaiResultCard: View {
             }
         }
         .jantenCard()
+    }
+}
+
+private struct DrawAnalysisCard: View {
+    let analyses: [(draw: String, waits: [TenpaiWait])]
+    let isAnalyzing: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("再摸一张可听")
+                    .font(.system(.title2, design: .rounded).weight(.bold))
+                    .foregroundStyle(Color.textPrimary)
+
+                Spacer()
+            }
+
+            if isAnalyzing {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(Color.feltBright)
+                    Text("分析中…")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 6)
+            } else if analyses.isEmpty {
+                Text("暂无摸牌可听")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+                    .padding(.vertical, 4)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(Array(analyses.enumerated()), id: \.element.draw) { index, analysis in
+                        DrawAnalysisRow(draw: analysis.draw, waits: analysis.waits)
+
+                        if index < analyses.count - 1 {
+                            Divider()
+                                .background(Color.hairline)
+                        }
+                    }
+                }
+            }
+        }
+        .jantenCard()
+    }
+}
+
+private struct DrawAnalysisRow: View {
+    let draw: String
+    let waits: [TenpaiWait]
+
+    private let waitColumns = [
+        GridItem(.adaptive(minimum: 46), spacing: 8)
+    ]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            TileImageView(code: draw, size: 36)
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.textSecondary)
+                .frame(width: 18)
+                .padding(.top, 15)
+
+            LazyVGrid(columns: waitColumns, alignment: .leading, spacing: 8) {
+                ForEach(waits) { wait in
+                    VStack(spacing: 5) {
+                        TileImageView(code: wait.tile, size: 30)
+                        Text("剩 \(wait.remaining)")
+                            .font(.caption2.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    .frame(width: 46)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 2)
     }
 }
