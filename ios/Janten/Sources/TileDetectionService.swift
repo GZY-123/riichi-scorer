@@ -115,7 +115,10 @@ final class TileDetectionService {
         }
 
         let compiledURL = try MLModel.compileModel(at: sourceURL)
-        let model = try MLModel(contentsOf: compiledURL, configuration: MLModelConfiguration())
+        let configuration = MLModelConfiguration()
+        // v31seg 在 GPU(MPSGraph) 上触发 MLIR 编译断言崩溃，强制 CPU+神经引擎绕开
+        configuration.computeUnits = .cpuAndNeuralEngine
+        let model = try MLModel(contentsOf: compiledURL, configuration: configuration)
         let visionModel = try VNCoreMLModel(for: model)
         cachedVisionModel = visionModel
         return visionModel
