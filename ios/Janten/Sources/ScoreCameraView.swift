@@ -84,7 +84,10 @@ struct ScoreCameraView: View {
             } message: {
                 Text("请在系统设置里允许算点Janten访问相机。")
             }
-            .onAppear(perform: loadPrefillIfNeeded)
+            .onAppear {
+                CameraCaptureOrientation.installLockIfNeeded()
+                loadPrefillIfNeeded()
+            }
             .onChange(of: photoItem) { _, newItem in
                 if newItem != nil {
                     Haptics.tap()

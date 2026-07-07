@@ -1,4 +1,5 @@
 import AVFoundation
+import ObjectiveC
 import SwiftUI
 import UIKit
 
@@ -7,10 +8,270 @@ struct CameraCaptureResult {
     let doraImage: UIImage
 }
 
-struct CameraCaptureView: View {
+struct CameraCaptureView: UIViewControllerRepresentable {
     let onCapture: (CameraCaptureResult) -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context _: Context) -> CameraCapturePresenterViewController {
+        CameraCapturePresenterViewController(
+            onCapture: { result in
+                onCapture(result)
+                dismiss()
+            },
+            onCancel: {
+                dismiss()
+            }
+        )
+    }
+
+    func updateUIViewController(_ uiViewController: CameraCapturePresenterViewController, context _: Context) {
+        uiViewController.update(
+            onCapture: { result in
+                onCapture(result)
+                dismiss()
+            },
+            onCancel: {
+                dismiss()
+            }
+        )
+    }
+
+    static func dismantleUIViewController(_ uiViewController: CameraCapturePresenterViewController, coordinator _: ()) {
+        uiViewController.restorePortraitOrientation()
+    }
+}
+
+final class CameraCapturePresenterViewController: UIViewController {
+    private var onCapture: (CameraCaptureResult) -> Void
+    private var onCancel: () -> Void
+    private var hasPresentedCamera = false
+    private var isFinishing = false
+
+    init(
+        onCapture: @escaping (CameraCaptureResult) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.onCapture = onCapture
+        self.onCancel = onCancel
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .fullScreen
+    }
+
+    @MainActor
+    required dynamic init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        .portrait
+    }
+
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        .portrait
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        true
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        restorePortraitOrientation()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        presentCameraIfNeeded()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        restorePortraitOrientation()
+    }
+
+    func update(
+        onCapture: @escaping (CameraCaptureResult) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.onCapture = onCapture
+        self.onCancel = onCancel
+    }
+
+    func restorePortraitOrientation() {
+        CameraCaptureOrientation.request(.portrait, from: self)
+    }
+
+    private func presentCameraIfNeeded() {
+        guard !hasPresentedCamera, !isFinishing else {
+            return
+        }
+
+        hasPresentedCamera = true
+        let content = CameraCaptureContent(
+            onCapture: { [weak self] result in
+                self?.finish(with: result)
+            },
+            onCancel: { [weak self] in
+                self?.cancel()
+            }
+        )
+        let controller = LandscapeCameraHostingController(rootView: content)
+        controller.modalPresentationStyle = .fullScreen
+        controller.modalTransitionStyle = .crossDissolve
+        present(controller, animated: false) {
+            controller.requestLandscapeOrientation()
+        }
+    }
+
+    private func finish(with result: CameraCaptureResult) {
+        guard !isFinishing else {
+            return
+        }
+
+        isFinishing = true
+        restorePortraitOrientation()
+        guard let presentedViewController else {
+            onCapture(result)
+            return
+        }
+        presentedViewController.dismiss(animated: false) { [weak self] in
+            guard let self else {
+                return
+            }
+            self.onCapture(result)
+        }
+    }
+
+    private func cancel() {
+        guard !isFinishing else {
+            return
+        }
+
+        isFinishing = true
+        restorePortraitOrientation()
+        guard let presentedViewController else {
+            onCancel()
+            return
+        }
+        presentedViewController.dismiss(animated: false) { [weak self] in
+            guard let self else {
+                return
+            }
+            self.onCancel()
+        }
+    }
+}
+
+private final class LandscapeCameraHostingController: UIHostingController<CameraCaptureContent> {
+    override init(rootView: CameraCaptureContent) {
+        super.init(rootView: rootView)
+    }
+
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        .landscapeRight
+    }
+
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        .landscapeRight
+    }
+
+    override var shouldAutorotate: Bool {
+        true
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        true
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        requestLandscapeOrientation()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        requestLandscapeOrientation()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        CameraCaptureOrientation.request(.portrait, from: self)
+    }
+
+    func requestLandscapeOrientation() {
+        CameraCaptureOrientation.request(.landscapeRight, from: self)
+    }
+
+    @MainActor
+    required dynamic init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+}
+
+enum CameraCaptureOrientation {
+    private static var supportedOrientations: UIInterfaceOrientationMask = .portrait
+    private static var didInstallLock = false
+
+    static func installLockIfNeeded() {
+        guard !didInstallLock, let delegate = UIApplication.shared.delegate else {
+            return
+        }
+
+        didInstallLock = true
+        let selector = NSSelectorFromString("application:supportedInterfaceOrientationsForWindow:")
+        guard let method = class_getInstanceMethod(CameraOrientationDelegateProxy.self, selector) else {
+            return
+        }
+
+        class_replaceMethod(
+            type(of: delegate),
+            selector,
+            method_getImplementation(method),
+            method_getTypeEncoding(method)
+        )
+    }
+
+    static func request(_ orientations: UIInterfaceOrientationMask, from viewController: UIViewController) {
+        installLockIfNeeded()
+        supportedOrientations = orientations
+        viewController.setNeedsUpdateOfSupportedInterfaceOrientations()
+        viewController.navigationController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+
+        guard let windowScene = viewController.view.window?.windowScene else {
+            return
+        }
+
+        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientations)) { error in
+            #if DEBUG
+            print("Camera orientation update failed: \(error.localizedDescription)")
+            #endif
+        }
+    }
+}
+
+private final class CameraOrientationDelegateProxy: NSObject {
+    @objc(application:supportedInterfaceOrientationsForWindow:)
+    func application(_: UIApplication, supportedInterfaceOrientationsFor _: UIWindow?) -> UIInterfaceOrientationMask {
+        CameraCaptureOrientation.currentSupportedOrientations
+    }
+}
+
+extension CameraCaptureOrientation {
+    static var currentSupportedOrientations: UIInterfaceOrientationMask {
+        supportedOrientations
+    }
+}
+
+private struct CameraCaptureContent: View {
+    let onCapture: (CameraCaptureResult) -> Void
+    let onCancel: () -> Void
+
     @StateObject private var camera = CameraCaptureController()
 
     var body: some View {
@@ -26,7 +287,7 @@ struct CameraCaptureView: View {
                     .fill(Color.black.opacity(0.52), style: FillStyle(eoFill: true))
 
                 CameraGuideFrame(frame: frames.hand, label: "手牌", labelPosition: .topLeading)
-                CameraGuideFrame(frame: frames.dora, label: "宝牌指示牌", labelPosition: .trailingVertical)
+                CameraGuideFrame(frame: frames.dora, label: "宝牌指示牌", labelPosition: .topTrailing)
 
                 cameraControls(in: proxy, frames: frames)
 
@@ -46,64 +307,58 @@ struct CameraCaptureView: View {
     }
 
     private func cameraControls(in proxy: GeometryProxy, frames: CameraGuideFrames) -> some View {
-        let bottomInset = max(proxy.safeAreaInsets.bottom, 18)
+        let shutterCenterX = proxy.size.width - max(proxy.safeAreaInsets.trailing, 14) - 54
+        let shutterCenterY = proxy.size.height / 2
+        let closeCenterX = max(proxy.safeAreaInsets.leading, 14) + 26
+        let closeCenterY = max(proxy.safeAreaInsets.top, 12) + 26
 
-        return VStack {
-            Spacer()
-
-            ZStack {
-                Button {
-                    Haptics.press()
-                    camera.capture(handFrame: frames.hand, doraFrame: frames.dora) { result in
-                        switch result {
-                        case .success(let captureResult):
-                            onCapture(captureResult)
-                            dismiss()
-                        case .failure(let error):
-                            Haptics.warning()
-                            camera.showError(error.localizedDescription)
-                        }
-                    }
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(camera.isCapturing ? 0.72 : 0.96))
-                            .frame(width: 74, height: 74)
-                        Circle()
-                            .stroke(Color.white.opacity(0.86), lineWidth: 5)
-                            .frame(width: 88, height: 88)
-                        if camera.isCapturing {
-                            ProgressView()
-                                .tint(Color.black.opacity(0.7))
-                        }
-                    }
-                    .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .disabled(camera.isCapturing)
-                .accessibilityLabel("拍摄")
-
-                HStack {
-                    Spacer()
-                    Button {
-                        Haptics.tap()
-                        camera.stopSession()
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.white)
-                            .frame(width: 48, height: 48)
-                            .background(Color.black.opacity(0.42), in: Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.28), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("关闭相机")
-                }
-                .padding(.trailing, 22)
+        return ZStack {
+            Button {
+                Haptics.tap()
+                camera.stopSession()
+                onCancel()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 52, height: 52)
+                    .background(Color.black.opacity(0.42), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.28), lineWidth: 1))
             }
-            .frame(height: 104)
-            .padding(.bottom, bottomInset)
+            .buttonStyle(.plain)
+            .accessibilityLabel("关闭相机")
+            .position(x: closeCenterX, y: closeCenterY)
+
+            Button {
+                Haptics.press()
+                camera.capture(handFrame: frames.hand, doraFrame: frames.dora) { result in
+                    switch result {
+                    case .success(let captureResult):
+                        onCapture(captureResult)
+                    case .failure(let error):
+                        Haptics.warning()
+                        camera.showError(error.localizedDescription)
+                    }
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(camera.isCapturing ? 0.72 : 0.96))
+                        .frame(width: 74, height: 74)
+                    Circle()
+                        .stroke(Color.white.opacity(0.86), lineWidth: 5)
+                        .frame(width: 88, height: 88)
+                    if camera.isCapturing {
+                        ProgressView()
+                            .tint(Color.black.opacity(0.7))
+                    }
+                }
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(camera.isCapturing)
+            .accessibilityLabel("拍摄")
+            .position(x: shutterCenterX, y: shutterCenterY)
         }
     }
 
@@ -127,26 +382,40 @@ struct CameraCaptureView: View {
     }
 
     private func guideFrames(in size: CGSize) -> CameraGuideFrames {
-        let handWidth = size.width * 0.92
-        let handHeight = size.height * 0.30
-        let handCenterY = size.height * 0.58
+        let leadingMargin = max(size.width * 0.035, 24)
+        let rightControlReserve = max(size.width * 0.13, 112)
+        let handWidth = min(size.width * 0.78, size.width - leadingMargin - rightControlReserve)
+        let handHeight = size.height * 0.42
+        let handXUpperBound = max(leadingMargin, size.width - rightControlReserve - handWidth)
+        let handX = Self.clamped(
+            size.width * 0.45 - handWidth / 2,
+            lowerBound: leadingMargin,
+            upperBound: handXUpperBound
+        )
+        let handCenterY = size.height * 0.62
         let handFrame = CGRect(
-            x: (size.width - handWidth) / 2,
+            x: handX,
             y: handCenterY - handHeight / 2,
             width: handWidth,
             height: handHeight
         )
 
-        let doraWidth = size.width * 0.44
-        let doraHeight = size.height * 0.12
+        let doraWidth = size.width * 0.26
+        let doraHeight = size.height * 0.22
+        let doraRightMargin = max(size.width * 0.08, 88)
+        let doraX = min(size.width * 0.64, size.width - doraRightMargin - doraWidth)
         let doraFrame = CGRect(
-            x: handFrame.maxX - doraWidth,
-            y: max(56, handFrame.minY - doraHeight - 18),
+            x: max(leadingMargin, doraX),
+            y: max(size.height * 0.12, 38),
             width: doraWidth,
             height: doraHeight
         )
 
         return CameraGuideFrames(hand: handFrame, dora: doraFrame)
+    }
+
+    private static func clamped(_ value: CGFloat, lowerBound: CGFloat, upperBound: CGFloat) -> CGFloat {
+        min(max(value, lowerBound), upperBound)
     }
 }
 
@@ -190,7 +459,7 @@ private final class CameraPreviewUIView: UIView {
     }
 
     func updateVideoOrientation() {
-        previewLayer.connection?.applyPortraitRotation()
+        previewLayer.connection?.applyLandscapeRightRotation()
     }
 }
 
@@ -210,7 +479,7 @@ private struct CameraGuideMask: Shape {
 private struct CameraGuideFrame: View {
     enum LabelPosition {
         case topLeading
-        case trailingVertical
+        case topTrailing
     }
 
     let frame: CGRect
@@ -243,15 +512,14 @@ private struct CameraGuideFrame: View {
                 .padding(.vertical, 5)
                 .background(Color.black.opacity(0.44), in: Capsule())
                 .position(x: frame.minX + 34, y: frame.minY - 12)
-        case .trailingVertical:
+        case .topTrailing:
             Text(label)
-                .font(.system(.caption2, design: .rounded).weight(.bold))
+                .font(.system(.caption, design: .rounded).weight(.bold))
                 .foregroundStyle(Color.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
                 .background(Color.black.opacity(0.44), in: Capsule())
-                .rotationEffect(.degrees(90))
-                .position(x: frame.maxX - 10, y: frame.midY)
+                .position(x: frame.maxX - 48, y: frame.minY - 12)
         }
     }
 }
@@ -365,7 +633,7 @@ private final class CameraCaptureController: NSObject, ObservableObject {
                 return
             }
 
-            self.photoOutput.connection(with: .video)?.applyPortraitRotation()
+            self.photoOutput.connection(with: .video)?.applyLandscapeRightRotation()
 
             let settings = AVCapturePhotoSettings()
             settings.photoQualityPrioritization = .quality
@@ -506,12 +774,12 @@ private enum CameraCaptureError: LocalizedError {
 }
 
 private extension AVCaptureConnection {
-    func applyPortraitRotation() {
-        let portraitAngle: CGFloat = 90
-        guard isVideoRotationAngleSupported(portraitAngle) else {
+    func applyLandscapeRightRotation() {
+        let landscapeRightAngle: CGFloat = 0
+        guard isVideoRotationAngleSupported(landscapeRightAngle) else {
             return
         }
-        videoRotationAngle = portraitAngle
+        videoRotationAngle = landscapeRightAngle
     }
 }
 
@@ -554,6 +822,22 @@ private extension UIImage {
             return nil
         }
 
-        return UIImage(cgImage: cropped, scale: scale, orientation: .up)
+        return UIImage(cgImage: cropped, scale: scale, orientation: .up).ensuringLandscapeUpOrientation()
+    }
+
+    private func ensuringLandscapeUpOrientation() -> UIImage {
+        guard size.height > size.width else {
+            return self
+        }
+
+        let rotatedSize = CGSize(width: size.height, height: size.width)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = scale
+        let renderer = UIGraphicsImageRenderer(size: rotatedSize, format: format)
+        return renderer.image { context in
+            context.cgContext.translateBy(x: rotatedSize.width, y: 0)
+            context.cgContext.rotate(by: .pi / 2)
+            draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 }

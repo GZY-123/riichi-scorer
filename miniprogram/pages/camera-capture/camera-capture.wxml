@@ -22,7 +22,7 @@
   <cover-view wx:if="{{recognizeState}}" class="status-pill">{{recognizeState}}</cover-view>
   <cover-view wx:if="{{captureError}}" class="error-pill">{{captureError}}</cover-view>
 
-  <cover-view class="bottom-controls">
+  <cover-view class="side-controls">
     <cover-view class="shutter {{capturing ? 'disabled' : ''}}" bindtap="onShutterTap">
       <cover-view class="shutter-core"></cover-view>
     </cover-view>

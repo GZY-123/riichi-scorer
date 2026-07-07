@@ -1,10 +1,32 @@
 import { detectTilesOnDevice } from "../../utils/localDetector";
 import {
-  DUAL_CAPTURE_FRAMES,
   frameToAspectFillSourceRect,
   frameToPercentStyle
 } from "../../utils/cameraCrop";
-import type { PixelRect, Size } from "../../utils/cameraCrop";
+import type { NormalizedFrame, PixelRect, Size } from "../../utils/cameraCrop";
+
+type ImageOrientation = WechatMiniprogram.GetImageInfoSuccessCallbackResult["orientation"];
+type Canvas2DContext = WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D;
+type CanvasImageSource = WechatMiniprogram.CanvasRenderingContext.CanvasImageSource;
+
+interface PhotoInfo extends Size {
+  orientation: ImageOrientation;
+}
+
+interface CropSource {
+  path: string;
+  size: Size;
+}
+
+const LANDSCAPE_CAPTURE_FRAMES: { hand: NormalizedFrame; dora: NormalizedFrame } = {
+  hand: { left: 0.11, top: 0.48, width: 0.78, height: 0.42 },
+  dora: { left: 0.7, top: 0.1, width: 0.26, height: 0.22 }
+};
+
+// camera-capture.json uses pageOrientation: "landscape" so only this page rotates.
+// If real-device testing shows camera and cover-view out of sync, switch fallback by
+// removing pageOrientation, rotating .camera-page 90deg in WXSS, and swapping the
+// preview width/height in getPreviewSize so the crop math still uses landscape axes.
 
 interface RecognizeResult {
   tiles: string[];
@@ -42,8 +64,8 @@ interface CanvasImage {
 
 Page({
   data: {
-    handFrameStyle: frameToPercentStyle(DUAL_CAPTURE_FRAMES.hand),
-    doraFrameStyle: frameToPercentStyle(DUAL_CAPTURE_FRAMES.dora),
+    handFrameStyle: frameToPercentStyle(LANDSCAPE_CAPTURE_FRAMES.hand),
+    doraFrameStyle: frameToPercentStyle(LANDSCAPE_CAPTURE_FRAMES.dora),
     cameraReady: false,
     cameraDenied: false,
     capturing: false,
@@ -129,13 +151,19 @@ Page({
   },
 
   async cropPhoto(photoPath: string): Promise<{ handImagePath: string; doraImagePath: string }> {
-    const [photoSize, canvas] = await Promise.all([this.getImageSize(photoPath), this.getCanvas()]);
+    const [photoInfo, canvas] = await Promise.all([this.getPhotoInfo(photoPath), this.getCanvas()]);
     const previewSize = this.getPreviewSize();
-    const handRect = frameToAspectFillSourceRect(DUAL_CAPTURE_FRAMES.hand, photoSize, previewSize);
-    const doraRect = frameToAspectFillSourceRect(DUAL_CAPTURE_FRAMES.dora, photoSize, previewSize);
+    const source = await this.normalizePhotoForLandscape(canvas, photoPath, photoInfo, previewSize);
 
-    const handImagePath = await this.cropRectToTempFile(canvas, photoPath, handRect);
-    const doraImagePath = await this.cropRectToTempFile(canvas, photoPath, doraRect);
+    // 横屏页面中框坐标以预览窗口为归一化坐标：手牌框 78% x 42%，宝牌框 26% x 22%。
+    // camera 预览按 aspectFill 显示，等比放大照片直到覆盖横屏窗口，长边溢出的像素在
+    // 预览两侧或上下不可见；frameToAspectFillSourceRect 先求出这块可见源图，再把框
+    // 的 left/top/width/height 映射回源图，保证裁出的图和用户在横屏取景框中看到的一致。
+    const handRect = frameToAspectFillSourceRect(LANDSCAPE_CAPTURE_FRAMES.hand, source.size, previewSize);
+    const doraRect = frameToAspectFillSourceRect(LANDSCAPE_CAPTURE_FRAMES.dora, source.size, previewSize);
+
+    const handImagePath = await this.cropRectToTempFile(canvas, source.path, handRect);
+    const doraImagePath = await this.cropRectToTempFile(canvas, source.path, doraRect);
     return { handImagePath, doraImagePath };
   },
 
@@ -191,7 +219,7 @@ Page({
     return this.loadCanvasImage(canvas, photoPath)
       .then((image) => {
         context.drawImage(
-          image as unknown as WechatMiniprogram.CanvasRenderingContext.CanvasImageSource,
+          image as unknown as CanvasImageSource,
           rect.x,
           rect.y,
           rect.width,
@@ -201,25 +229,34 @@ Page({
           width,
           height
         );
-        return new Promise<string>((resolve, reject) => {
-          wx.canvasToTempFilePath(
-            {
-              canvas,
-              x: 0,
-              y: 0,
-              width,
-              height,
-              destWidth: width,
-              destHeight: height,
-              fileType: "jpg",
-              quality: 0.92,
-              success: (output) => resolve(output.tempFilePath),
-              fail: (error) => reject(new Error(`裁剪图片导出失败：${this.errorMessage(error)}`))
-            },
-            this
-          );
-        });
+        return this.exportCanvasToTempFile(canvas, width, height, 0.92);
       });
+  },
+
+  exportCanvasToTempFile(
+    canvas: WechatMiniprogram.Canvas,
+    width: number,
+    height: number,
+    quality: number
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      wx.canvasToTempFilePath(
+        {
+          canvas,
+          x: 0,
+          y: 0,
+          width,
+          height,
+          destWidth: width,
+          destHeight: height,
+          fileType: "jpg",
+          quality,
+          success: (output) => resolve(output.tempFilePath),
+          fail: (error) => reject(new Error(`裁剪图片导出失败：${this.errorMessage(error)}`))
+        },
+        this
+      );
+    });
   },
 
   getCanvas(): Promise<WechatMiniprogram.Canvas> {
@@ -237,14 +274,50 @@ Page({
     });
   },
 
-  getImageSize(filePath: string): Promise<Size> {
+  getPhotoInfo(filePath: string): Promise<PhotoInfo> {
     return new Promise((resolve, reject) => {
       wx.getImageInfo({
         src: filePath,
-        success: (result) => resolve({ width: result.width, height: result.height }),
+        success: (result) => resolve({
+          width: result.width,
+          height: result.height,
+          orientation: result.orientation || "up"
+        }),
         fail: (error) => reject(new Error(`读取照片尺寸失败：${this.errorMessage(error)}`))
       });
     });
+  },
+
+  async normalizePhotoForLandscape(
+    canvas: WechatMiniprogram.Canvas,
+    photoPath: string,
+    photoInfo: PhotoInfo,
+    previewSize: Size
+  ): Promise<CropSource> {
+    const orientation = selectOutputOrientation(photoInfo, previewSize);
+    const outputSize = getOrientedSize(photoInfo, orientation);
+
+    if (orientation === "up") {
+      return { path: photoPath, size: photoInfo };
+    }
+
+    const outputWidth = outputSize.width;
+    const outputHeight = outputSize.height;
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, outputWidth, outputHeight);
+
+    const image = await this.loadCanvasImage(canvas, photoPath);
+    drawImageWithOrientation(
+      context,
+      image as unknown as CanvasImageSource,
+      photoInfo,
+      orientation
+    );
+
+    const path = await this.exportCanvasToTempFile(canvas, outputWidth, outputHeight, 0.94);
+    return { path, size: { width: outputWidth, height: outputHeight } };
   },
 
   getPreviewSize(): Size {
@@ -309,4 +382,80 @@ function isPermissionError(message: string): boolean {
 
 function isLocalDetectorUnavailable(message: string): boolean {
   return /不支持|未配置|下载失败|缓存失败|会话创建失败|加载失败|不可用|初始化失败|云存储模型/.test(message);
+}
+
+function selectOutputOrientation(photoInfo: PhotoInfo, previewSize: Size): ImageOrientation {
+  const preferredSize = getOrientedSize(photoInfo, photoInfo.orientation);
+  const previewIsLandscape = previewSize.width >= previewSize.height;
+  const preferredMatchesPreview = (preferredSize.width >= preferredSize.height) === previewIsLandscape;
+
+  if (preferredMatchesPreview) {
+    return photoInfo.orientation;
+  }
+  if (!previewIsLandscape) {
+    return photoInfo.orientation;
+  }
+  if (photoInfo.width >= photoInfo.height) {
+    return isMirroredOrientation(photoInfo.orientation) ? "up-mirrored" : "up";
+  }
+  return isMirroredOrientation(photoInfo.orientation) ? "right-mirrored" : "right";
+}
+
+function getOrientedSize(photoInfo: PhotoInfo, orientation: ImageOrientation): Size {
+  if (swapsAxes(orientation)) {
+    return { width: photoInfo.height, height: photoInfo.width };
+  }
+  return { width: photoInfo.width, height: photoInfo.height };
+}
+
+function swapsAxes(orientation: ImageOrientation): boolean {
+  return orientation === "left" ||
+    orientation === "left-mirrored" ||
+    orientation === "right" ||
+    orientation === "right-mirrored";
+}
+
+function isMirroredOrientation(orientation: ImageOrientation): boolean {
+  return orientation.endsWith("-mirrored");
+}
+
+function drawImageWithOrientation(
+  context: Canvas2DContext,
+  image: CanvasImageSource,
+  photoInfo: PhotoInfo,
+  orientation: ImageOrientation
+) {
+  const sourceWidth = photoInfo.width;
+  const sourceHeight = photoInfo.height;
+
+  context.save();
+  switch (orientation) {
+    case "up-mirrored":
+      context.setTransform(-1, 0, 0, 1, sourceWidth, 0);
+      break;
+    case "down":
+      context.setTransform(-1, 0, 0, -1, sourceWidth, sourceHeight);
+      break;
+    case "down-mirrored":
+      context.setTransform(1, 0, 0, -1, 0, sourceHeight);
+      break;
+    case "left-mirrored":
+      context.setTransform(0, 1, 1, 0, 0, 0);
+      break;
+    case "right":
+      context.setTransform(0, 1, -1, 0, sourceHeight, 0);
+      break;
+    case "right-mirrored":
+      context.setTransform(0, -1, -1, 0, sourceHeight, sourceWidth);
+      break;
+    case "left":
+      context.setTransform(0, -1, 1, 0, 0, sourceWidth);
+      break;
+    case "up":
+    default:
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      break;
+  }
+  context.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+  context.restore();
 }
