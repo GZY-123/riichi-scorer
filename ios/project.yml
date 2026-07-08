@@ -26,6 +26,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gzy.janten
+        TARGETED_DEVICE_FAMILY: 1
         INFOPLIST_KEY_CFBundleDisplayName: 算点Janten
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
